@@ -16,6 +16,7 @@ import {
   X,
   User,
   Settings,
+  Tag,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { signOutAdminAction } from '@/app/actions/auth';
@@ -76,6 +77,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin', label: 'Vue d’ensemble', icon: LayoutDashboard },
     { href: '/admin/orders', label: 'Commandes COD', icon: ShoppingBag, badge: 'Direct' },
     { href: '/admin/products', label: 'Catalogue Produits', icon: Shirt },
+    { href: '/admin/coupons', label: 'Codes Promo', icon: Tag },
     { href: '/admin/settings', label: 'Paramètres & Contact', icon: Settings },
   ];
 

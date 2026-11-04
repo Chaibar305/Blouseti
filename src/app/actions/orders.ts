@@ -23,6 +23,8 @@ export interface CodOrderInput {
     };
   }>;
   customEmbroidery?: string;
+  couponCode?: string;
+  discountAmount?: number;
   totalAmount: number;
   notes?: string;
 }
@@ -48,6 +50,8 @@ export interface DbOrder {
     };
   }>;
   custom_embroidery?: string | null;
+  coupon_code?: string | null;
+  discount_amount?: number;
   total_amount: number;
   status: 'nouveau' | 'confirmé' | 'expédié' | 'livré' | 'annulé';
   notes?: string | null;
@@ -58,6 +62,7 @@ export interface DbOrder {
  * 1. Créer une commande Cash On Delivery (COD) dans Supabase
  */
 import { appendOrderToSheet } from '@/lib/googleSheets';
+import { incrementCouponUsage } from '@/app/actions/coupons';
 
 export async function createCodOrderAction(data: CodOrderInput) {
   try {
@@ -71,6 +76,8 @@ export async function createCodOrderAction(data: CodOrderInput) {
       address: data.address,
       items: data.items,
       custom_embroidery: data.customEmbroidery || null,
+      coupon_code: data.couponCode || null,
+      discount_amount: data.discountAmount || 0,
       total_amount: data.totalAmount,
       status: 'nouveau',
       notes: data.notes || null,
@@ -85,6 +92,17 @@ export async function createCodOrderAction(data: CodOrderInput) {
     if (error) {
       console.error('Erreur insertion commande Supabase:', error.message);
       return { success: false, error: error.message };
+    }
+
+    // Incrémenter l'utilisation du coupon si applicable
+    if (data.couponCode) {
+      try {
+        incrementCouponUsage(data.couponCode).catch((e) =>
+          console.warn('Erreur incrementCouponUsage différée:', e)
+        );
+      } catch {
+        // Ignorer
+      }
     }
 
     // Synchronisation automatique vers Google Sheets en arrière-plan
