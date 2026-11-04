@@ -203,10 +203,10 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
           {/* ======================================================== */}
           {/* COLONNE GAUCHE (Galerie Photos Interactive)              */}
           {/* ======================================================== */}
-          <div className="lg:col-span-7 flex flex-col-reverse sm:flex-row gap-4 sticky top-24">
+          <div className="lg:col-span-7 flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 lg:sticky lg:top-24">
             
             {/* Thumbnails (Vertical on desktop, horizontal on mobile) */}
-            <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto max-h-[560px] no-scrollbar shrink-0">
+            <div className="flex sm:flex-col gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-y-auto max-h-[560px] no-scrollbar shrink-0 py-1 sm:py-0">
               {galleryImages.map((img, idx) => {
                 const isActive = activeImageIndex === idx;
                 return (
@@ -214,7 +214,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                     key={idx}
                     type="button"
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-white border-2 transition-all shrink-0 cursor-pointer ${
+                    className={`relative w-14 h-14 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-white border-2 transition-all shrink-0 cursor-pointer ${
                       isActive
                         ? 'border-[#1B2A4A] ring-2 ring-[#1B2A4A]/20 scale-102 shadow-sm'
                         : 'border-slate-200 hover:border-slate-400 opacity-70 hover:opacity-100'
@@ -232,7 +232,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
             </div>
 
             {/* Main Interactive Hero Image */}
-            <div className="relative flex-1 aspect-square sm:aspect-4/5 rounded-3xl overflow-hidden bg-white border border-slate-200/80 shadow-md">
+            <div className="relative flex-1 aspect-square sm:aspect-4/5 rounded-2xl sm:rounded-3xl overflow-hidden bg-white border border-slate-200/80 shadow-md">
               <Image
                 src={galleryImages[activeImageIndex] || selectedColor.image || product.colors[0].image}
                 alt={`${product.name} - ${selectedColor.name}`}

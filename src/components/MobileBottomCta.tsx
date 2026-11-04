@@ -9,8 +9,8 @@ export default function MobileBottomCta() {
   const pathname = usePathname();
   const { quickCheckoutItem, isCartOpen, openCart } = useCart();
 
-  // Do not render on admin pages or if quick checkout modal is already open
-  if (pathname?.startsWith('/admin') || quickCheckoutItem || isCartOpen) {
+  // Do not render on admin pages, product pages, or if quick checkout modal is already open
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/products') || quickCheckoutItem || isCartOpen) {
     return null;
   }
 
