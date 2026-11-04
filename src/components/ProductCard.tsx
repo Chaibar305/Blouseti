@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Star, ShoppingBag, Zap, Ruler, Sparkles, Check } from 'lucide-react';
 import { Product, ProductColor } from '@/types';
 import { useCart } from '@/context/CartContext';
@@ -182,11 +183,11 @@ export default function ProductCard({ product }: ProductCardProps) {
       </div>
 
       {/* Product Image with Hover Zoom & Touch Swipe (Mobile) */}
-      <div
-        className={`relative aspect-square w-full bg-slate-50 overflow-hidden select-none ${
+      <Link
+        href={`/products/${product.slug || product.id}`}
+        className={`block relative aspect-square w-full bg-slate-50 overflow-hidden select-none ${
           isOutOfStock ? 'cursor-default opacity-85' : 'cursor-pointer'
         }`}
-        onClick={!isOutOfStock ? handleQuickBuy : undefined}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -210,13 +211,20 @@ export default function ProductCard({ product }: ProductCardProps) {
         {productImages.length > 1 && (
           <div
             className="absolute bottom-2.5 right-2.5 flex items-center gap-1 z-10 bg-black/40 backdrop-blur-xs px-2 py-1 rounded-full"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
           >
             {productImages.map((_, i) => (
               <button
                 key={i}
                 type="button"
-                onClick={() => setActiveImageIndex(i)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveImageIndex(i);
+                }}
                 className={`w-1.5 h-1.5 rounded-full transition-all ${
                   activeImageIndex === i ? 'bg-white w-3' : 'bg-white/50'
                 }`}
@@ -225,7 +233,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             ))}
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Product Details */}
       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
@@ -252,10 +260,12 @@ export default function ProductCard({ product }: ProductCardProps) {
             </button>
           </div>
 
-          {/* Product Name */}
-          <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug group-hover:text-[#1B2A4A] transition-colors">
-            {product.name}
-          </h3>
+          {/* Product Name (Link to dedicated page) */}
+          <Link href={`/products/${product.slug || product.id}`} className="block group/title">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug group-hover/title:text-[#1B2A4A] group-hover/title:underline transition-colors">
+              {product.name}
+            </h3>
+          </Link>
           <p className="text-xs text-slate-500 mt-1 line-clamp-2">
             {product.subtitle}
           </p>

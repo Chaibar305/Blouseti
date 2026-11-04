@@ -3,6 +3,7 @@ import { Product } from '@/types';
 export const PRODUCTS: Product[] = [
   {
     id: 'scrub-prestige-4way',
+    slug: 'scrub-prestige-4way',
     name: 'Scrub Médical Confort 4-Way Stretch',
     subtitle: 'Ensemble complet : Haut Col V + Pantalon Jogger 6 poches',
     category: 'scrubs',
@@ -30,6 +31,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'blouse-dr-prestige',
+    slug: 'blouse-dr-prestige',
     name: 'Blouse Médicale Blanche "Dr. Prestige"',
     subtitle: 'Coupe cintrée haut de gamme avec col officier & boutons pression',
     category: 'blouses',
@@ -56,6 +58,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'veste-polaire-thermo',
+    slug: 'veste-polaire-thermo',
     name: 'Veste Polaire Médicale Thermo-Lite',
     subtitle: 'Veste zippée micropolaire chaude pour blocs & gardes de nuit',
     category: 'vestes',
@@ -82,6 +85,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'pack-garde-duo',
+    slug: 'pack-garde-duo',
     name: 'Pack Duo "Garde 24h" (2 Scrubs + Broderie Offerte)',
     subtitle: '2 Ensembles de scrubs complets au choix + 2 broderies offertes',
     category: 'packs',
@@ -107,6 +111,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'scrub-sage-zen',
+    slug: 'scrub-sage-zen',
     name: 'Scrub Médical Sérénité Vert Sauge',
     subtitle: 'Couleur apaisante certifiée pour cabinet dentaire et pédiatrie',
     category: 'scrubs',
@@ -132,6 +137,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'scrub-burgundy-elite',
+    slug: 'scrub-burgundy-elite',
     name: 'Scrub Chirurgical Prestige Bordeaux',
     subtitle: 'Teinte riche et élégante pour chirurgiens et spécialistes',
     category: 'scrubs',

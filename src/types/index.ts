@@ -8,6 +8,7 @@ export interface ProductColor {
 
 export interface Product {
   id: string;
+  slug: string;
   name: string;
   subtitle: string;
   category: 'scrubs' | 'blouses' | 'vestes' | 'packs';

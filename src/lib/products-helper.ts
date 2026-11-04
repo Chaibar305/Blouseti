@@ -41,6 +41,7 @@ export function mapDbProductToProduct(dbProduct: DbProduct): Product {
     return {
       ...template,
       id: dbProduct.slug || template.id,
+      slug: dbProduct.slug || template.slug || template.id,
       name: dbProduct.title || template.name,
       category: dbProduct.category ? normalizeCategory(dbProduct.category) : template.category,
       price: Number(dbProduct.price) || template.price,
@@ -77,6 +78,7 @@ export function mapDbProductToProduct(dbProduct: DbProduct): Product {
 
   return {
     id: dbProduct.slug || dbProduct.id,
+    slug: dbProduct.slug || dbProduct.id,
     name: dbProduct.title,
     subtitle: dbProduct.description ? dbProduct.description.slice(0, 80) : 'Tenue médicale professionnelle Blouseti',
     category: normalizeCategory(dbProduct.category || 'scrubs'),

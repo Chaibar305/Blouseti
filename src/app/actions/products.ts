@@ -300,3 +300,66 @@ export async function uploadProductImageAction(formData: FormData): Promise<{ su
   }
 }
 
+/**
+ * Récupère un produit unique par son slug (ou ID)
+ */
+export async function getProductBySlugAction(
+  slug: string
+): Promise<{ success: boolean; product?: any; error?: string }> {
+  try {
+    const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
+    const supabase = createAdminClient();
+
+    // 1. Chercher dans la table Supabase
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .or(`slug.eq.${cleanSlug},id.eq.${cleanSlug}`)
+      .maybeSingle();
+
+    const { mapDbProductToProduct } = await import('@/lib/products-helper');
+
+    if (!error && data) {
+      const mapped = mapDbProductToProduct(data as DbProduct);
+      return { success: true, product: mapped };
+    }
+
+    // 2. Chercher dans les produits locaux en fallback
+    const local = PRODUCTS.find(
+      (p) =>
+        (p.slug && p.slug.toLowerCase() === cleanSlug) ||
+        p.id.toLowerCase() === cleanSlug ||
+        p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') === cleanSlug
+    );
+
+    if (local) {
+      return { success: true, product: local };
+    }
+
+    return { success: false, error: 'Produit introuvable' };
+  } catch (err: any) {
+    console.error('Exception getProductBySlugAction:', err);
+    const local = PRODUCTS.find((p) => (p.slug || p.id) === slug);
+    if (local) {
+      return { success: true, product: local };
+    }
+    return { success: false, error: err.message || 'Erreur serveur' };
+  }
+}
+
+/**
+ * Récupère tous les produits actifs pour le storefront et les recommandations
+ */
+export async function getActiveProductsAction(): Promise<any[]> {
+  try {
+    const res = await getDbProductsAction();
+    const { mapDbProductToProduct, filterActiveProducts } = await import('@/lib/products-helper');
+    if (res && res.success && res.products) {
+      const mapped = res.products.map(mapDbProductToProduct);
+      return filterActiveProducts(mapped);
+    }
+    return PRODUCTS;
+  } catch {
+    return PRODUCTS;
+  }
+}

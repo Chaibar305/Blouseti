@@ -47,23 +47,23 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-700">
-            <a href="#catalogue" className="hover:text-sky-600 transition-colors">
+            <Link href="/#catalogue" className="hover:text-sky-600 transition-colors">
               Collection Complète
-            </a>
-            <a href="#scrubs" className="hover:text-sky-600 transition-colors flex items-center gap-1">
+            </Link>
+            <Link href="/#scrubs" className="hover:text-sky-600 transition-colors flex items-center gap-1">
               Scrubs Médicaux
               <span className="text-[10px] bg-sky-100 text-sky-700 font-bold px-1.5 py-0.2 rounded-full">Top</span>
-            </a>
-            <a href="#blouses" className="hover:text-sky-600 transition-colors">
+            </Link>
+            <Link href="/#blouses" className="hover:text-sky-600 transition-colors">
               Blouses Blanches
-            </a>
-            <a href="#vestes" className="hover:text-sky-600 transition-colors">
+            </Link>
+            <Link href="/#vestes" className="hover:text-sky-600 transition-colors">
               Vestes & Polaires
-            </a>
-            <a href="#broderie" className="hover:text-amber-600 transition-colors flex items-center gap-1 text-amber-700 font-semibold">
+            </Link>
+            <Link href="/#broderie" className="hover:text-amber-600 transition-colors flex items-center gap-1 text-amber-700 font-semibold">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               Broderie Offerte
-            </a>
+            </Link>
             <button
               onClick={openSizeGuide}
               className="text-slate-600 hover:text-sky-600 flex items-center gap-1.5 transition-colors cursor-pointer"
@@ -152,37 +152,37 @@ export default function Header() {
 
             {/* Drawer Navigation Links */}
             <div className="flex-1 overflow-y-auto p-4 space-y-1.5 text-sm font-semibold text-slate-800">
-              <a
-                href="#catalogue"
+              <Link
+                href="/#catalogue"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-between px-3.5 py-3 rounded-xl hover:bg-slate-100 transition-colors"
               >
                 <span>📦 Collection Complète</span>
-              </a>
-              <a
-                href="#scrubs"
+              </Link>
+              <Link
+                href="/#scrubs"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-between px-3.5 py-3 rounded-xl hover:bg-sky-50 text-sky-900 transition-colors"
               >
                 <span>🩺 Scrubs Médicaux 4-Way Stretch</span>
                 <span className="text-[10px] bg-sky-200 text-sky-800 font-bold px-2 py-0.5 rounded-full">Top</span>
-              </a>
-              <a
-                href="#blouses"
+              </Link>
+              <Link
+                href="/#blouses"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-between px-3.5 py-3 rounded-xl hover:bg-slate-100 transition-colors"
               >
                 <span>🥼 Blouses Blanches Prestige</span>
-              </a>
-              <a
-                href="#vestes"
+              </Link>
+              <Link
+                href="/#vestes"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-between px-3.5 py-3 rounded-xl hover:bg-slate-100 transition-colors"
               >
                 <span>🧥 Vestes &amp; Polaires Chaudes</span>
-              </a>
-              <a
-                href="#broderie"
+              </Link>
+              <Link
+                href="/#broderie"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-between px-3.5 py-3 rounded-xl hover:bg-amber-50 text-amber-900 transition-colors"
               >
@@ -191,7 +191,7 @@ export default function Header() {
                   Broderie Nom &amp; Titre (+20 DH)
                 </span>
                 <span className="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded-full">Offert</span>
-              </a>
+              </Link>
 
               <div className="pt-2 border-t border-slate-100 my-2" />
 
