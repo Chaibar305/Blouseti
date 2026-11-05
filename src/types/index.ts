@@ -1,9 +1,28 @@
-export type ProductCategory = 'all' | 'scrubs' | 'blouses' | 'vestes' | 'packs';
+export type ProductCategory = string;
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
+  description?: string;
+  display_order: number;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface ColorSizeVariant {
+  size: string;
+  stock: number;
+  active: boolean;
+}
 
 export interface ProductColor {
   name: string;
   hex: string;
   image: string;
+  image_url?: string;
+  sizes?: ColorSizeVariant[];
 }
 
 export interface Product {
@@ -11,7 +30,7 @@ export interface Product {
   slug: string;
   name: string;
   subtitle: string;
-  category: 'scrubs' | 'blouses' | 'vestes' | 'packs';
+  category: string;
   price: number;
   originalPrice?: number;
   badge?: string;
@@ -29,6 +48,7 @@ export interface Product {
   promo_price?: number | null;
   long_description?: string;
   images?: string[];
+  embroidery_price?: number;
 }
 
 export interface EmbroideryOption {
@@ -50,6 +70,7 @@ export interface CartItem {
 }
 
 export interface CustomerInfo {
+  gender?: 'Femme' | 'Homme' | string;
   fullName: string;
   phone: string;
   city: string;

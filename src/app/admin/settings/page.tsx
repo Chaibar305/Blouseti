@@ -30,6 +30,7 @@ import {
   ToggleRight,
   Send,
   HelpCircle,
+  Truck,
 } from 'lucide-react';
 import {
   SiteSettings,
@@ -37,11 +38,16 @@ import {
   updateSiteSettingsAction,
 } from '@/app/actions/settings';
 import { testGoogleSheetsAction } from '@/app/actions/googleSheets';
+import { InstagramIcon, FacebookIcon } from '@/components/SocialIcons';
 
-type SettingsTab = 'contact' | 'pixels' | 'scripts' | 'sheets';
+type SettingsTab = 'livraison' | 'sheets' | 'pixels' | 'scripts' | 'contact';
 
 export default function AdminSettingsPage() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('sheets');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('livraison');
+
+  // 0. Tarification de Livraison
+  const [shippingFee, setShippingFee] = useState<number>(35);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState<number>(450);
 
   // 1. Coordonnées de contact
   const [whatsappNumber, setWhatsappNumber] = useState('');
@@ -49,6 +55,8 @@ export default function AdminSettingsPage() {
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [topbarText, setTopbarText] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [facebookUrl, setFacebookUrl] = useState('');
 
   // 2. Paramètres des Pixels
   const [fbPixelId, setFbPixelId] = useState('');
@@ -87,11 +95,19 @@ export default function AdminSettingsPage() {
     setLoading(true);
     try {
       const data = await getSiteSettingsAction();
+      setShippingFee(data.shipping_fee !== undefined && data.shipping_fee !== null ? Number(data.shipping_fee) : 35);
+      setFreeShippingThreshold(
+        data.free_shipping_threshold !== undefined && data.free_shipping_threshold !== null
+          ? Number(data.free_shipping_threshold)
+          : 450
+      );
       setWhatsappNumber(data.whatsapp_number || '');
       setPhone(data.phone || '');
       setEmail(data.email || '');
       setAddress(data.address || '');
       setTopbarText(data.topbar_text || '');
+      setInstagramUrl(data.instagram_url || 'https://www.instagram.com/blouseti.shop/');
+      setFacebookUrl(data.facebook_url || 'https://web.facebook.com/profile.php?id=61596347515075');
 
       setFbPixelId(data.fb_pixel_id || '');
       setTiktokPixelId(data.tiktok_pixel_id || '');
@@ -123,11 +139,15 @@ export default function AdminSettingsPage() {
 
     try {
       const res = await updateSiteSettingsAction({
+        shipping_fee: Number(shippingFee),
+        free_shipping_threshold: Number(freeShippingThreshold),
         whatsapp_number: whatsappNumber,
         phone,
         email,
         address,
         topbar_text: topbarText,
+        instagram_url: instagramUrl,
+        facebook_url: facebookUrl,
         fb_pixel_id: fbPixelId,
         tiktok_pixel_id: tiktokPixelId,
         snapchat_pixel_id: snapchatPixelId,
@@ -142,7 +162,7 @@ export default function AdminSettingsPage() {
       });
 
       if (res.success) {
-        showToast('✓ Paramètres, pixels et synchronisation Sheets enregistrés avec succès');
+        showToast('✓ Paramètres de livraison, pixels et boutique enregistrés avec succès');
       } else {
         showToast(res.error || 'Erreur lors de l’enregistrement', 'error');
       }
@@ -289,6 +309,21 @@ export default function AdminSettingsPage() {
       {/* Main Tabs Navigation */}
       <div className="flex border-b border-slate-200 space-x-1 sm:space-x-3 overflow-x-auto pb-px">
         <button
+          onClick={() => setActiveTab('livraison')}
+          className={`flex items-center gap-2 py-3 px-4 font-bold text-xs sm:text-sm border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'livraison'
+              ? 'border-sky-600 text-sky-900 bg-sky-50/50 rounded-t-xl'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+          }`}
+        >
+          <Truck className="w-4 h-4 text-sky-600" />
+          <span>Frais de Livraison</span>
+          <span className="bg-sky-100 text-sky-800 text-[10px] px-2 py-0.5 rounded-full font-black">
+            {shippingFee} DH
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('sheets')}
           className={`flex items-center gap-2 py-3 px-4 font-bold text-xs sm:text-sm border-b-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === 'sheets'
@@ -359,6 +394,236 @@ export default function AdminSettingsPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* ============================================================== */}
+          {/* TAB: FRAIS DE LIVRAISON AU MAROC                               */}
+          {/* ============================================================== */}
+          {activeTab === 'livraison' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              
+              {/* Introduction Banner */}
+              <div className="bg-gradient-to-r from-sky-900 to-[#1B2A4A] text-white rounded-3xl p-6 sm:p-7 shadow-lg relative overflow-hidden">
+                <div className="relative z-10 max-w-2xl">
+                  <span className="inline-flex items-center gap-1.5 bg-white/10 text-sky-200 text-[11px] font-bold px-3 py-1 rounded-full mb-3 backdrop-blur-xs">
+                    <Truck className="w-3.5 h-3.5 text-sky-400" />
+                    Politique Tarifaire de Livraison au Maroc
+                  </span>
+                  <h2 className="text-lg sm:text-xl font-black">
+                    Gestion des Frais de Livraison &amp; Seuil Gratuit
+                  </h2>
+                  <p className="text-xs text-slate-200 mt-1 leading-relaxed">
+                    Définissez ici le montant des frais de livraison standard facturés au client partout au Maroc (Casablanca, Rabat, Marrakech, Tanger, Fès, etc.) ainsi que le seuil à partir duquel vous offrez la livraison gratuite.
+                  </p>
+                </div>
+              </div>
+
+              {/* Delivery Settings Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* 1. Frais de livraison standard */}
+                <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600 shrink-0">
+                        <Truck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm sm:text-base font-black text-slate-900">
+                          Frais de Livraison Standard
+                        </h3>
+                        <p className="text-xs text-slate-500">Tarif par défaut pour toute commande</p>
+                      </div>
+                    </div>
+                    <span className="bg-sky-100 text-sky-900 font-black text-sm px-3 py-1 rounded-xl">
+                      {shippingFee} DH
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Tarif de livraison partout au Maroc (en Dirhams DH) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        max="200"
+                        step="1"
+                        value={shippingFee}
+                        onChange={(e) => setShippingFee(Number(e.target.value))}
+                        required
+                        className="w-full text-lg font-black text-[#1B2A4A] bg-slate-50 border border-slate-300 rounded-2xl pl-4 pr-14 py-3 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 font-mono"
+                      />
+                      <span className="absolute right-4 top-3.5 text-xs font-bold text-slate-400">
+                        DH
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1.5">
+                      Ce montant s&apos;affiche sur la modale de commande COD (Paiement à la livraison) et dans le panier.
+                    </p>
+                  </div>
+
+                  {/* Boutons rapides */}
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                      Sélection rapide en 1 clic :
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {[0, 25, 29, 35, 40, 45].map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setShippingFee(val)}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+                            shippingFee === val
+                              ? 'bg-sky-600 text-white border-sky-600 shadow-xs'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {val === 0 ? 'Gratuit (0 DH)' : `${val} DH`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Seuil de livraison gratuite */}
+                <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
+                        <Sparkles className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm sm:text-base font-black text-slate-900">
+                          Seuil de Livraison Gratuite
+                        </h3>
+                        <p className="text-xs text-slate-500">Offrez la livraison au-delà d&apos;un montant</p>
+                      </div>
+                    </div>
+                    <span className="bg-emerald-100 text-emerald-900 font-black text-sm px-3 py-1 rounded-xl">
+                      {freeShippingThreshold === 0 ? 'Désactivé' : `${freeShippingThreshold} DH`}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Montant minimum du panier pour livraison offerte (en DH)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        max="2000"
+                        step="10"
+                        value={freeShippingThreshold}
+                        onChange={(e) => setFreeShippingThreshold(Number(e.target.value))}
+                        className="w-full text-lg font-black text-[#1B2A4A] bg-slate-50 border border-slate-300 rounded-2xl pl-4 pr-14 py-3 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 font-mono"
+                      />
+                      <span className="absolute right-4 top-3.5 text-xs font-bold text-slate-400">
+                        DH
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1.5">
+                      Réglez à <strong className="text-slate-600">0</strong> pour désactiver la livraison gratuite et toujours faire payer la livraison standard.
+                    </p>
+                  </div>
+
+                  {/* Boutons rapides */}
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                      Sélection rapide de seuil :
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {[0, 300, 400, 450, 500, 600].map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setFreeShippingThreshold(val)}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+                            freeShippingThreshold === val
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {val === 0 ? 'Désactiver (Toujours payant)' : `${val} DH`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Simulation en direct */}
+              <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-7 shadow-md">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-sky-400">
+                    <CheckCircle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-white">Simulateur en Temps Réel pour le Client</h4>
+                    <p className="text-[11px] text-slate-400">Voici exactement ce que le client verra lors de sa commande :</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  {/* Cas 1: Commande inférieure au seuil */}
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center justify-between text-slate-300 font-bold border-b border-white/10 pb-2">
+                      <span>Exemple : 1 Blouse Médicale</span>
+                      <span className="text-amber-400">299 DH</span>
+                    </div>
+                    <div className="space-y-1 text-[11px] text-slate-400">
+                      <div className="flex justify-between">
+                        <span>Articles :</span>
+                        <span className="text-slate-200">299 DH</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Frais de livraison :</span>
+                        <span className={shippingFee === 0 || (freeShippingThreshold > 0 && 299 >= freeShippingThreshold) ? 'text-emerald-400 font-bold' : 'text-sky-300 font-bold'}>
+                          {shippingFee === 0 || (freeShippingThreshold > 0 && 299 >= freeShippingThreshold) ? '0 DH (GRATUIT)' : `+ ${shippingFee} DH`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-t border-white/10 pt-1.5 font-bold text-xs text-white">
+                        <span>Total Net à payer :</span>
+                        <span className="text-emerald-400 text-sm">
+                          {299 + (shippingFee === 0 || (freeShippingThreshold > 0 && 299 >= freeShippingThreshold) ? 0 : shippingFee)} DH
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cas 2: Commande supérieure ou égale au seuil */}
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center justify-between text-slate-300 font-bold border-b border-white/10 pb-2">
+                      <span>Exemple : Pack 2 Ensembles</span>
+                      <span className="text-emerald-400">598 DH</span>
+                    </div>
+                    <div className="space-y-1 text-[11px] text-slate-400">
+                      <div className="flex justify-between">
+                        <span>Articles :</span>
+                        <span className="text-slate-200">598 DH</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Frais de livraison :</span>
+                        <span className={freeShippingThreshold > 0 && 598 >= freeShippingThreshold ? 'text-emerald-400 font-bold' : shippingFee === 0 ? 'text-emerald-400 font-bold' : 'text-sky-300 font-bold'}>
+                          {freeShippingThreshold > 0 && 598 >= freeShippingThreshold ? '🎉 GRATUIT (0 DH)' : shippingFee === 0 ? 'GRATUIT (0 DH)' : `+ ${shippingFee} DH`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-t border-white/10 pt-1.5 font-bold text-xs text-white">
+                        <span>Total Net à payer :</span>
+                        <span className="text-emerald-400 text-sm">
+                          {598 + (freeShippingThreshold > 0 && 598 >= freeShippingThreshold ? 0 : shippingFee)} DH
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
 
           {/* ============================================================== */}
           {/* TAB: INTÉGRATION GOOGLE SHEETS                                */}
@@ -963,6 +1228,42 @@ export default function AdminSettingsPage() {
                         className="w-full text-sm bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3 py-2.5 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500"
                       />
                       <MapPin className="w-4 h-4 text-red-500 absolute left-3.5 top-3.5" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1.5">
+                      Page Instagram Officielle
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="url"
+                        value={instagramUrl}
+                        onChange={(e) => setInstagramUrl(e.target.value)}
+                        placeholder="https://www.instagram.com/blouseti.shop/"
+                        className="w-full text-sm bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3 py-2.5 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                      />
+                      <div className="absolute left-3.5 top-3.5 text-pink-500">
+                        <InstagramIcon className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1.5">
+                      Page Facebook Officielle
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="url"
+                        value={facebookUrl}
+                        onChange={(e) => setFacebookUrl(e.target.value)}
+                        placeholder="https://web.facebook.com/profile.php?id=61596347515075"
+                        className="w-full text-sm bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3 py-2.5 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                      />
+                      <div className="absolute left-3.5 top-3.5 text-[#1877F2]">
+                        <FacebookIcon className="w-4 h-4" />
+                      </div>
                     </div>
                   </div>
                 </div>

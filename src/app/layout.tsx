@@ -77,6 +77,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
+import { Suspense } from 'react';
 import PixelScripts from '@/components/PixelScripts';
 
 export default function RootLayout({
@@ -96,8 +97,10 @@ export default function RootLayout({
             <CartDrawer />
             <CodCheckoutModal />
             <SizeGuideModal />
-            <WhatsAppFloat />
-            <MobileBottomCta />
+            <Suspense fallback={null}>
+              <WhatsAppFloat />
+              <MobileBottomCta />
+            </Suspense>
           </CartProvider>
         </SettingsProvider>
         {/* Vercel Analytics */}

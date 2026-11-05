@@ -220,6 +220,7 @@ export default function AdminOrdersPage() {
           'Date': dateStr,
           'N° Commande': o.order_number,
           'Nom Client': o.customer_name,
+          'Genre / Coupe': o.gender || 'Femme',
           'Téléphone': o.phone,
           'Ville': o.city,
           'Adresse Complète': o.address,
@@ -238,6 +239,7 @@ export default function AdminOrdersPage() {
         { wch: 18 }, // Date
         { wch: 18 }, // N° Commande
         { wch: 22 }, // Nom Client
+        { wch: 14 }, // Genre / Coupe
         { wch: 16 }, // Téléphone
         { wch: 16 }, // Ville
         { wch: 32 }, // Adresse
@@ -691,9 +693,20 @@ export default function AdminOrdersPage() {
 
                       {/* Customer Info */}
                       <td className="py-3.5 px-4">
-                        <span className="font-bold text-slate-900 block text-xs">
-                          {order.customer_name}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-slate-900 text-xs">
+                            {order.customer_name}
+                          </span>
+                          <span
+                            className={`text-[9px] font-bold px-1.5 py-0.2 rounded-md ${
+                              order.gender === 'Homme'
+                                ? 'bg-sky-100 text-sky-800 border border-sky-200'
+                                : 'bg-rose-100 text-rose-800 border border-rose-200'
+                            }`}
+                          >
+                            {order.gender === 'Homme' ? '👨‍⚕️ Homme' : '👩‍⚕️ Femme'}
+                          </span>
+                        </div>
                         <span className="font-mono text-slate-500 text-[11px] flex items-center gap-1 mt-0.5">
                           <Phone className="w-3 h-3 text-emerald-600" />
                           <span>{order.phone}</span>
@@ -836,7 +849,18 @@ export default function AdminOrdersPage() {
 
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                     <div>
-                      <p className="font-bold text-slate-900">{order.customer_name}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="font-bold text-slate-900">{order.customer_name}</p>
+                        <span
+                          className={`text-[9px] font-bold px-1.5 py-0.2 rounded-md ${
+                            order.gender === 'Homme'
+                              ? 'bg-sky-100 text-sky-800 border border-sky-200'
+                              : 'bg-rose-100 text-rose-800 border border-rose-200'
+                          }`}
+                        >
+                          {order.gender === 'Homme' ? '👨‍⚕️ Homme' : '👩‍⚕️ Femme'}
+                        </span>
+                      </div>
                       <p className="text-[11px] text-slate-500 font-mono">{order.phone}</p>
                     </div>
 

@@ -8,13 +8,17 @@ import { SHIPPING_POLICY } from '@/data/morocco';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
 import { trackEvent } from '@/lib/analytics';
+import { InstagramIcon, FacebookIcon } from '@/components/SocialIcons';
 
 export default function Footer() {
   const { openSizeGuide } = useCart();
   const { settings } = useSettings();
 
+  const instagramUrl = settings.instagram_url || 'https://www.instagram.com/blouseti.shop/';
+  const facebookUrl = settings.facebook_url || 'https://web.facebook.com/profile.php?id=61596347515075';
+
   return (
-    <footer className="bg-[#111C32] text-slate-300 pt-16 pb-12 border-t border-white/10">
+    <footer id="contact" className="bg-[#111C32] text-slate-300 pt-16 pb-12 border-t border-white/10 scroll-mt-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Main Grid */}
@@ -52,6 +56,31 @@ export default function Footer() {
               <ShieldCheck className="w-4 h-4" />
               <span>100% Cash On Delivery (Paiement à la livraison)</span>
             </div>
+
+            {/* Social Media Buttons */}
+            <div className="flex items-center gap-2.5 pt-1">
+              <span className="text-xs text-slate-400 font-semibold">Suivez-nous :</span>
+              <a
+                href={instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white text-xs font-bold shadow-md hover:scale-105 transition-all"
+                title="Suivre Blouseti sur Instagram"
+              >
+                <InstagramIcon className="w-4 h-4" />
+                <span>Instagram</span>
+              </a>
+              <a
+                href={facebookUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] text-white text-xs font-bold shadow-md hover:scale-105 transition-all"
+                title="Suivre Blouseti sur Facebook"
+              >
+                <FacebookIcon className="w-4 h-4" />
+                <span>Facebook</span>
+              </a>
+            </div>
           </div>
 
           {/* Quick Links Categories */}
@@ -73,7 +102,7 @@ export default function Footer() {
                 <a href="#catalogue" className="hover:text-white transition-colors">Packs Duo & Étudiants</a>
               </li>
               <li>
-                <a href="#broderie" className="hover:text-white transition-colors text-amber-400">Atelier Broderie (+20 DH)</a>
+                <a href="#broderie" className="hover:text-white transition-colors text-amber-400">Atelier Broderie (+45 DH)</a>
               </li>
             </ul>
           </div>
@@ -140,6 +169,28 @@ export default function Footer() {
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                 <span>Atelier &amp; Expéditions : {settings.address} 🇲🇦</span>
+              </li>
+              <li className="pt-1.5 flex items-center gap-2">
+                <InstagramIcon className="w-4 h-4 text-pink-400 shrink-0" />
+                <a
+                  href={instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-pink-400 transition-colors font-medium"
+                >
+                  Instagram : <strong className="text-white hover:text-pink-400">@blouseti.shop</strong>
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <FacebookIcon className="w-4 h-4 text-[#1877F2] shrink-0" />
+                <a
+                  href={facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#1877F2] transition-colors font-medium"
+                >
+                  Facebook : <strong className="text-white hover:text-[#1877F2]">Blouseti Maroc</strong>
+                </a>
               </li>
             </ul>
           </div>

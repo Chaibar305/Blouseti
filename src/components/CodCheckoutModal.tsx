@@ -33,6 +33,7 @@ import { validateCoupon } from '@/app/actions/coupons';
 
 // Validation Schema for Moroccan COD orders
 const codSchema = z.object({
+  gender: z.enum(['Femme', 'Homme']),
   fullName: z.string().min(3, 'Veuillez saisir votre nom et prénom (min. 3 caractères)'),
   phone: z
     .string()
@@ -105,10 +106,13 @@ export default function CodCheckoutModal() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<CodFormData>({
     resolver: zodResolver(codSchema),
     defaultValues: {
+      gender: 'Femme',
       fullName: '',
       phone: '',
       city: 'Casablanca',
@@ -117,11 +121,21 @@ export default function CodCheckoutModal() {
     },
   });
 
+  const selectedGender = watch('gender');
+
   if (!quickCheckoutItem) return null;
 
   const product = quickCheckoutItem.product;
   const isPack = product.category === 'packs';
-  const embroideryPricePerItem = isPack ? 0 : 20; // Offert sur les packs
+  const embroideryPricePerItem =
+    quickCheckoutItem.embroidery?.price !== undefined
+      ? quickCheckoutItem.embroidery.price
+      : product.embroidery_price !== undefined
+      ? Number(product.embroidery_price)
+      : isPack
+      ? 0
+      : 45;
+  const isFreeEmbroidery = embroideryPricePerItem === 0;
   const itemPrice = product.price * itemQty;
   const embroideryCost = hasEmbroidery ? embroideryPricePerItem * itemQty : 0;
   const subtotal = itemPrice + embroideryCost;
@@ -137,12 +151,18 @@ export default function CodCheckoutModal() {
     }
   }
 
+  const standardShippingFee = settings.shipping_fee !== undefined ? Number(settings.shipping_fee) : SHIPPING_POLICY.standardRate;
+  const freeShippingThreshold = settings.free_shipping_threshold !== undefined ? Number(settings.free_shipping_threshold) : SHIPPING_POLICY.freeShippingThreshold;
+
   const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
   const shippingFee =
-    subtotalAfterDiscount >= SHIPPING_POLICY.freeShippingThreshold
+    subtotalAfterDiscount >= freeShippingThreshold
       ? 0
-      : SHIPPING_POLICY.standardRate;
+      : standardShippingFee;
   const total = subtotalAfterDiscount + shippingFee;
+
+  const currentSelectedVariant = itemColor?.sizes?.find((s) => s.size === itemSize);
+  const isCurrentVariantOutOfStock = currentSelectedVariant ? currentSelectedVariant.stock <= 0 : false;
 
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) {
@@ -223,6 +243,7 @@ export default function CodCheckoutModal() {
       await createCodOrderAction({
         orderNumber: orderId,
         customerName: data.fullName,
+        gender: data.gender,
         phone: data.phone,
         city: data.city,
         address: data.address,
@@ -314,7 +335,7 @@ export default function CodCheckoutModal() {
               <div className="flex gap-3 sm:gap-4 items-center">
                 <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
                   <Image
-                    src={itemColor?.image || product.colors[0]?.image || '/images/scrub-navy.jpg'}
+                    src={itemColor?.image_url || itemColor?.image || product.colors[0]?.image_url || product.colors[0]?.image || '/images/scrub-navy.jpg'}
                     alt={product.name}
                     fill
                     className="object-cover"
@@ -342,7 +363,14 @@ export default function CodCheckoutModal() {
                           <button
                             key={c.name}
                             type="button"
-                            onClick={() => setItemColor(c)}
+                            onClick={() => {
+                              setItemColor(c);
+                              const avail = c.sizes && c.sizes.length > 0 ? c.sizes.filter((s) => s.active !== false) : null;
+                              if (avail && !avail.some((s) => s.size === itemSize && s.stock > 0)) {
+                                const firstInStock = avail.find((s) => s.stock > 0);
+                                if (firstInStock) setItemSize(firstInStock.size);
+                              }
+                            }}
                             className={`w-4 h-4 rounded-full border transition-all cursor-pointer ${
                               itemColor?.name === c.name
                                 ? 'ring-2 ring-sky-500 scale-110 shadow-xs'
@@ -363,11 +391,19 @@ export default function CodCheckoutModal() {
                         onChange={(e) => setItemSize(e.target.value)}
                         className="bg-transparent font-bold text-slate-900 text-xs focus:outline-hidden cursor-pointer"
                       >
-                        {product.sizes.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
+                        {itemColor?.sizes && itemColor.sizes.length > 0
+                          ? itemColor.sizes
+                              .filter((s) => s.active !== false)
+                              .map((s) => (
+                                <option key={s.size} value={s.size} disabled={s.stock <= 0}>
+                                  {s.size} {s.stock <= 0 ? '(Épuisé)' : `(${s.stock} pcs)`}
+                                </option>
+                              ))
+                          : product.sizes.map((s) => (
+                              <option key={s} value={s}>
+                                {s}
+                              </option>
+                            ))}
                       </select>
                     </div>
 
@@ -410,12 +446,12 @@ export default function CodCheckoutModal() {
                       </span>
                       <span
                         className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 ${
-                          isPack
+                          isFreeEmbroidery
                             ? 'bg-emerald-100 text-emerald-800'
                             : 'bg-amber-100 text-amber-900'
                         }`}
                       >
-                        {isPack ? 'OFFERTE (Pack)' : '+20 DH'}
+                        {isFreeEmbroidery ? 'OFFERTE (0 DH)' : `+${embroideryPricePerItem} DH`}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500">
@@ -451,10 +487,59 @@ export default function CodCheckoutModal() {
             </div>
 
             {/* 2. Customer Delivery Information Card */}
-            <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-200/80 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700 pb-1 border-b border-slate-100">
-                <MapPin className="w-4 h-4 text-sky-600" />
-                <span>Coordonnées de livraison au Maroc</span>
+            <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-200/80 shadow-xs space-y-3.5">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
+                  <MapPin className="w-4 h-4 text-sky-600" />
+                  <span>Coordonnées de livraison au Maroc</span>
+                </div>
+                <span className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                  100% Cash à la livraison
+                </span>
+              </div>
+
+              {/* Gender / Coupe Selection */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <span>Genre du client &amp; Coupe</span>
+                    <span className="text-red-500">*</span>
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-normal">Pour ajuster la coupe de votre tenue</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setValue('gender', 'Femme', { shouldValidate: true })}
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                      selectedGender === 'Femme'
+                        ? 'bg-rose-50/90 border-rose-500 text-rose-900 ring-2 ring-rose-200 shadow-xs scale-[1.01]'
+                        : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    <span className="text-base">👩‍⚕️</span>
+                    <span>Femme (Coupe Cintrée)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setValue('gender', 'Homme', { shouldValidate: true })}
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                      selectedGender === 'Homme'
+                        ? 'bg-sky-50/90 border-sky-600 text-sky-950 ring-2 ring-sky-200 shadow-xs scale-[1.01]'
+                        : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    <span className="text-base">👨‍⚕️</span>
+                    <span>Homme (Coupe Droite)</span>
+                  </button>
+                </div>
+                <input type="hidden" {...register('gender')} />
+                {errors.gender && (
+                  <p className="text-[11px] text-red-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    {errors.gender.message}
+                  </p>
+                )}
               </div>
 
               {/* Full Name & Phone in 2 cols on tablet+ */}
@@ -702,7 +787,7 @@ export default function CodCheckoutModal() {
               <div>
                 <span className="text-xs text-slate-500 font-medium block">Total Net à payer :</span>
                 <span className="text-[11px] text-emerald-600 font-bold">
-                  {shippingFee === 0 ? 'Livraison 100% offerte' : '+ Livraison 35 DH'}
+                  {shippingFee === 0 ? 'Livraison 100% offerte' : `+ Livraison ${shippingFee} DH`}
                 </span>
               </div>
               <span className="text-xl sm:text-2xl font-black text-[#1B2A4A] tracking-tight">
@@ -712,14 +797,20 @@ export default function CodCheckoutModal() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full min-h-[48px] sm:min-h-[52px] btn-shimmer bg-[#1B2A4A] hover:bg-[#111C32] disabled:opacity-60 text-white font-black py-3 px-5 rounded-2xl text-xs sm:text-sm shadow-xl shadow-[#1B2A4A]/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+              disabled={isSubmitting || isCurrentVariantOutOfStock}
+              className={`w-full min-h-[48px] sm:min-h-[52px] font-black py-3 px-5 rounded-2xl text-xs sm:text-sm shadow-xl transition-all flex items-center justify-center gap-2 ${
+                isCurrentVariantOutOfStock
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+                  : 'btn-shimmer bg-[#1B2A4A] hover:bg-[#111C32] disabled:opacity-60 text-white shadow-[#1B2A4A]/25 cursor-pointer active:scale-[0.98]'
+              }`}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Traitement de votre commande...</span>
                 </>
+              ) : isCurrentVariantOutOfStock ? (
+                <span>TAILLE ÉPUISÉE POUR CE COLORIS</span>
               ) : (
                 <>
                   <Truck className="w-4 h-4 text-emerald-400 shrink-0" />

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { useCart } from '@/context/CartContext';
@@ -8,10 +8,17 @@ import { usePathname } from 'next/navigation';
 import { trackEvent } from '@/lib/analytics';
 
 export default function WhatsAppFloat() {
+  const [mounted, setMounted] = useState(false);
   const [showBubble, setShowBubble] = useState(false); // Discrète sur mobile
   const { settings } = useSettings();
   const { quickCheckoutItem, isCartOpen } = useCart();
   const pathname = usePathname();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   // Hide completely when checkout modal or cart drawer is open, or on admin pages
   if (quickCheckoutItem || isCartOpen || pathname?.startsWith('/admin')) {

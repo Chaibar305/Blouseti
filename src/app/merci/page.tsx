@@ -73,7 +73,8 @@ function OrderConfirmationContent() {
 
     const message = `*Confirmation Commande Blouseti*%0A%0A` +
       `*N° Commande:* ${order.orderId}%0A` +
-      `*Client:* ${order.customer.fullName}%0A` +
+      `*Client:* ${order.customer.fullName} (${order.customer.gender || 'Femme'})%0A` +
+      `*Genre / Coupe:* ${order.customer.gender || 'Femme'}%0A` +
       `*Téléphone:* ${order.customer.phone}%0A` +
       `*Ville:* ${order.customer.city}%0A` +
       `*Adresse:* ${order.customer.address}%0A%0A` +
@@ -163,7 +164,20 @@ function OrderConfirmationContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl text-xs">
               <div className="space-y-1">
                 <p className="text-slate-500 font-medium">Destinataire :</p>
-                <p className="font-bold text-slate-900">{order.customer.fullName}</p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="font-bold text-slate-900">{order.customer.fullName}</p>
+                  {order.customer.gender && (
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                        order.customer.gender === 'Homme'
+                          ? 'bg-sky-100 text-sky-800'
+                          : 'bg-rose-100 text-rose-800'
+                      }`}
+                    >
+                      {order.customer.gender === 'Homme' ? '👨‍⚕️ Homme' : '👩‍⚕️ Femme'}
+                    </span>
+                  )}
+                </div>
                 <p className="text-slate-600">{order.customer.phone}</p>
               </div>
               <div className="space-y-1">

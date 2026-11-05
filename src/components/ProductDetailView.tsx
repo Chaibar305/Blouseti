@@ -46,8 +46,17 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
 
   // Embroidery State
   const isPack = product.category === 'packs';
-  const embroideryPrice = isPack ? 0 : 20;
-  const [hasEmbroidery, setHasEmbroidery] = useState<boolean>(isPack); // Activée par défaut sur les packs offerts
+  const embroideryPrice =
+    product.embroidery_price !== undefined && product.embroidery_price !== null
+      ? Number(product.embroidery_price)
+      : isPack
+      ? 0
+      : 45;
+  const isFreeEmbroidery = embroideryPrice === 0;
+  const [hasEmbroidery, setHasEmbroidery] = useState<boolean>(isFreeEmbroidery); // Activée par défaut si offerte
+  const unitEmbroideryPrice = hasEmbroidery ? embroideryPrice : 0;
+  const effectiveUnitPrice = product.price + unitEmbroideryPrice;
+  const totalPrice = effectiveUnitPrice * quantity;
   const [embroideryName, setEmbroideryName] = useState<string>('Dr. ');
   const [embroiderySpeciality, setEmbroiderySpeciality] = useState<string>('');
   const [embroideryFont, setEmbroideryFont] = useState<'Moderne Classique' | 'Script Élégance' | 'Serif Prestige'>(
@@ -64,40 +73,111 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
     setOpenAccordion((prev) => (prev === id ? null : id));
   };
 
-  // Build gallery image list
+  // Build gallery image list (stable order: primary images first, then any color images)
   const galleryImages: string[] = useMemo(() => {
     const list: string[] = [];
     if (product.images && product.images.length > 0) {
       product.images.forEach((img) => {
-        if (!list.includes(img)) list.push(img);
+        if (img && !list.includes(img)) list.push(img);
       });
     }
-    if (selectedColor?.image && !list.includes(selectedColor.image)) {
-      list.unshift(selectedColor.image);
-    }
-    product.colors.forEach((c) => {
-      if (c.image && !list.includes(c.image)) list.push(c.image);
+    product.colors?.forEach((c) => {
+      const img = c.image_url || c.image;
+      if (img && !list.includes(img)) list.push(img);
     });
     return list.length > 0 ? list : ['/images/scrub-navy.jpg'];
-  }, [product, selectedColor]);
+  }, [product]);
 
   const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
 
-  // When color is changed, find matching image and update active image
+  // Get active sizes for currently selected color
+  const currentColorSizes = useMemo(() => {
+    if (selectedColor?.sizes && selectedColor.sizes.length > 0) {
+      return selectedColor.sizes.filter((s) => s.active !== false);
+    }
+    // Fallback if granular sizes are not configured
+    return (product.sizes && product.sizes.length > 0 ? product.sizes : ['XS', 'S', 'M', 'L', 'XL', 'XXL']).map((s) => ({
+      size: s,
+      stock: product.stock_quantity ?? 10,
+      active: true,
+    }));
+  }, [selectedColor, product.sizes, product.stock_quantity]);
+
+  // Stock logic
+  const isOutOfStock = Boolean(
+    product.is_out_of_stock || (product.stock_quantity !== undefined && product.stock_quantity <= 0)
+  );
+
+  // Variant stock checking for current selected size in current selected color
+  const currentVariant = currentColorSizes.find((s) => s.size === selectedSize);
+  const currentVariantStock = currentVariant ? currentVariant.stock : 0;
+  const isVariantOutOfStock = isOutOfStock || !currentVariant || currentVariantStock <= 0;
+
+  // Synchronise le sélecteur de taille en fonction de la couleur activement sélectionnée
+  const syncColorAndSize = (newColor: ProductColor) => {
+    setSelectedColor(newColor);
+
+    const availableSizes =
+      newColor.sizes && newColor.sizes.length > 0
+        ? newColor.sizes.filter((s) => s.active !== false)
+        : (product.sizes || []).map((s) => ({ size: s, stock: product.stock_quantity ?? 10, active: true }));
+
+    // Si la taille actuellement sélectionnée n'est plus disponible dans la nouvelle couleur choisie (ou stock === 0),
+    // bascule automatiquement sur la première taille en stock
+    const isCurrentStillInStock = availableSizes.some(
+      (s) => s.size === selectedSize && s.stock > 0
+    );
+
+    if (!isCurrentStillInStock) {
+      const firstInStock = availableSizes.find((s) => s.stock > 0);
+      if (firstInStock) {
+        setSelectedSize(firstInStock.size);
+      } else if (availableSizes.length > 0) {
+        setSelectedSize(availableSizes[0].size);
+      }
+    }
+  };
+
+  // Ensure initial size is valid on mount
+  React.useEffect(() => {
+    const initialSizes = selectedColor?.sizes?.filter((s) => s.active !== false);
+    if (initialSizes && initialSizes.length > 0) {
+      const isSelectedValid = initialSizes.some((s) => s.size === selectedSize && s.stock > 0);
+      if (!isSelectedValid) {
+        const firstInStock = initialSizes.find((s) => s.stock > 0);
+        if (firstInStock) {
+          setSelectedSize(firstInStock.size);
+        }
+      }
+    }
+  }, []);
+
+  // When color is changed, find matching image, sync sizes, and update active image
   const handleColorChange = (color: ProductColor) => {
-    setSelectedColor(color);
-    if (color.image) {
-      const idx = galleryImages.indexOf(color.image);
+    syncColorAndSize(color);
+    const targetImg = color.image_url || color.image;
+    if (targetImg) {
+      const idx = galleryImages.findIndex((img) => img === targetImg);
       if (idx !== -1) {
         setActiveImageIndex(idx);
       }
     }
   };
 
-  // Stock logic
-  const isOutOfStock = Boolean(
-    product.is_out_of_stock || (product.stock_quantity !== undefined && product.stock_quantity <= 0)
-  );
+  // When thumbnail is clicked, switch photo AND auto-select matching color variant
+  const handleThumbnailClick = (idx: number) => {
+    setActiveImageIndex(idx);
+    const clickedImg = galleryImages[idx];
+    if (clickedImg && product.colors) {
+      const matchingColor = product.colors.find(
+        (c) => (c.image_url && c.image_url === clickedImg) || (c.image && c.image === clickedImg)
+      );
+      if (matchingColor) {
+        syncColorAndSize(matchingColor);
+      }
+    }
+  };
+
   const isLowStock =
     !isOutOfStock &&
     product.stock_quantity !== undefined &&
@@ -111,6 +191,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
 
   // Handlers
   const handleQuickBuy = () => {
+    if (isVariantOutOfStock) return;
     openQuickCheckout({
       id: `${product.id}-${selectedColor.name}-${selectedSize}`,
       product,
@@ -131,6 +212,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
   };
 
   const handleAddToCart = () => {
+    if (isVariantOutOfStock) return;
     addToCart({
       id: `${product.id}-${selectedColor.name}-${selectedSize}`,
       product,
@@ -213,7 +295,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => setActiveImageIndex(idx)}
+                    onClick={() => handleThumbnailClick(idx)}
                     className={`relative w-14 h-14 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-white border-2 transition-all shrink-0 cursor-pointer ${
                       isActive
                         ? 'border-[#1B2A4A] ring-2 ring-[#1B2A4A]/20 scale-102 shadow-sm'
@@ -226,6 +308,15 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                       fill
                       className="object-cover"
                     />
+                    {product.colors?.find((c) => (c.image_url || c.image) === img) && (
+                      <span
+                        className="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full border border-white shadow-xs z-10"
+                        style={{
+                          backgroundColor: product.colors.find((c) => (c.image_url || c.image) === img)?.hex,
+                        }}
+                        title={`Couleur : ${product.colors.find((c) => (c.image_url || c.image) === img)?.name}`}
+                      />
+                    )}
                   </button>
                 );
               })}
@@ -234,7 +325,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
             {/* Main Interactive Hero Image */}
             <div className="relative flex-1 aspect-square sm:aspect-4/5 rounded-2xl sm:rounded-3xl overflow-hidden bg-white border border-slate-200/80 shadow-md">
               <Image
-                src={galleryImages[activeImageIndex] || selectedColor.image || product.colors[0].image}
+                src={galleryImages[activeImageIndex] || selectedColor.image_url || selectedColor.image || product.colors[0]?.image || '/images/scrub-navy.jpg'}
                 alt={`${product.name} - ${selectedColor.name}`}
                 fill
                 priority
@@ -320,16 +411,25 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
               <div>
                 <div className="flex items-baseline gap-3">
                   <span className="text-3xl sm:text-4xl font-black text-[#1B2A4A] tracking-tight">
-                    {product.price}{' '}
+                    {effectiveUnitPrice}{' '}
                     <span className="text-lg sm:text-xl font-bold text-sky-700">DH</span>
                   </span>
                   {product.originalPrice && (
                     <span className="text-lg line-through text-slate-400 font-semibold">
-                      {product.originalPrice} DH
+                      {product.originalPrice + unitEmbroideryPrice} DH
                     </span>
                   )}
                 </div>
-                {product.originalPrice && (
+                {hasEmbroidery && (
+                  <p className="text-xs font-bold mt-1">
+                    {isFreeEmbroidery ? (
+                      <span className="text-emerald-600">✓ Broderie prénom &amp; fonction offerte (0 DH)</span>
+                    ) : (
+                      <span className="text-amber-700">Inclut la broderie personnalisée (+{embroideryPrice} DH)</span>
+                    )}
+                  </p>
+                )}
+                {product.originalPrice && !hasEmbroidery && (
                   <p className="text-xs font-bold text-emerald-600 mt-1">
                     Économisez {product.originalPrice - product.price} DH immédiatement
                   </p>
@@ -384,6 +484,16 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-slate-700">
                   Taille : <strong className="text-slate-900 font-bold">{selectedSize}</strong>
+                  {currentVariant && currentVariant.stock > 0 && (
+                    <span className="text-[11px] text-emerald-600 font-medium ml-2">
+                      ({currentVariant.stock} en stock)
+                    </span>
+                  )}
+                  {isVariantOutOfStock && (
+                    <span className="text-[11px] text-red-600 font-bold ml-2">
+                      (Épuisé pour {selectedColor.name})
+                    </span>
+                  )}
                 </span>
                 <button
                   type="button"
@@ -395,21 +505,41 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                 </button>
               </div>
 
-              <div className="grid grid-cols-6 gap-2">
-                {product.sizes.map((size) => {
-                  const isSelected = selectedSize === size;
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {currentColorSizes.map((variant) => {
+                  const isSelected = selectedSize === variant.size;
+                  const isSizeOutOfStock = variant.stock <= 0;
                   return (
                     <button
-                      key={size}
+                      key={variant.size}
                       type="button"
-                      onClick={() => setSelectedSize(size)}
-                      className={`py-2.5 text-xs sm:text-sm font-extrabold rounded-xl border transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-[#1B2A4A] text-white border-[#1B2A4A] shadow-md scale-102 ring-2 ring-[#1B2A4A]/20'
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                      disabled={isSizeOutOfStock}
+                      onClick={() => {
+                        if (!isSizeOutOfStock) setSelectedSize(variant.size);
+                      }}
+                      title={
+                        isSizeOutOfStock
+                          ? `${variant.size} - Rupture de stock (${selectedColor.name})`
+                          : `${variant.size} (${variant.stock} pièces en stock)`
+                      }
+                      className={`relative py-2.5 text-xs sm:text-sm font-extrabold rounded-xl border transition-all ${
+                        isSizeOutOfStock
+                          ? 'bg-slate-100 text-slate-400 border-slate-200 line-through opacity-50 cursor-not-allowed select-none'
+                          : isSelected
+                          ? 'bg-[#1B2A4A] text-white border-[#1B2A4A] shadow-md scale-102 ring-2 ring-[#1B2A4A]/20 cursor-pointer'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer'
                       }`}
                     >
-                      {size}
+                      <span>{variant.size}</span>
+                      {isSizeOutOfStock ? (
+                        <span className="block text-[9px] font-bold text-red-500 no-underline leading-none mt-0.5">
+                          0 pcs
+                        </span>
+                      ) : variant.stock <= 3 ? (
+                        <span className="block text-[9px] font-bold text-amber-600 leading-none mt-0.5">
+                          {variant.stock} rest.
+                        </span>
+                      ) : null}
                     </button>
                   );
                 })}
@@ -439,12 +569,12 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
 
                 <span
                   className={`text-xs font-black px-2.5 py-1 rounded-full ${
-                    isPack
+                    isFreeEmbroidery
                       ? 'bg-emerald-100 text-emerald-800'
                       : 'bg-amber-100 text-amber-800'
                   }`}
                 >
-                  {isPack ? 'OFFERTE (0 DH)' : '+20 DH'}
+                  {isFreeEmbroidery ? 'OFFERTE (0 DH)' : `+${embroideryPrice} DH`}
                 </span>
               </div>
 
@@ -551,14 +681,14 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                 {/* Secondary Add to Cart Button */}
                 <button
                   type="button"
-                  onClick={!isOutOfStock ? handleAddToCart : undefined}
-                  disabled={isOutOfStock}
-                  className={`flex-1 py-3 px-4 rounded-xl border-2 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                    isOutOfStock
+                  onClick={!isVariantOutOfStock ? handleAddToCart : undefined}
+                  disabled={isVariantOutOfStock}
+                  className={`flex-1 py-3 px-4 rounded-xl border-2 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
+                    isVariantOutOfStock
                       ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
                       : isAddedAnimation
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-md'
-                      : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-300 shadow-xs'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-md cursor-pointer'
+                      : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-300 shadow-xs cursor-pointer'
                   }`}
                 >
                   {isAddedAnimation ? (
@@ -578,21 +708,23 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
               {/* Main Beez.ma Inspired 1-Click COD CTA */}
               <button
                 type="button"
-                onClick={!isOutOfStock ? handleQuickBuy : undefined}
-                disabled={isOutOfStock}
-                className={`w-full py-4 px-6 rounded-2xl text-sm sm:text-base font-black transition-all flex items-center justify-center gap-2 shadow-xl cursor-pointer ${
-                  isOutOfStock
+                onClick={!isVariantOutOfStock ? handleQuickBuy : undefined}
+                disabled={isVariantOutOfStock}
+                className={`w-full py-4 px-6 rounded-2xl text-sm sm:text-base font-black transition-all flex items-center justify-center gap-2 shadow-xl ${
+                  isVariantOutOfStock
                     ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                    : 'btn-shimmer bg-[#1B2A4A] hover:bg-[#111C32] text-white active:scale-98 shadow-[#1B2A4A]/25'
+                    : 'btn-shimmer bg-[#1B2A4A] hover:bg-[#111C32] text-white active:scale-98 shadow-[#1B2A4A]/25 cursor-pointer'
                 }`}
               >
                 <Zap className="w-5 h-5 text-amber-400 fill-amber-400 shrink-0" />
                 <span>
                   {isOutOfStock
                     ? 'PRODUIT TEMPORAIREMENT ÉPUISÉ'
-                    : 'COMMANDER EN 1 CLIC (PAIEMENT À LA LIVRAISON)'}
+                    : isVariantOutOfStock
+                    ? 'TAILLE ÉPUISÉE POUR CE COLORIS'
+                    : `COMMANDER EN 1 CLIC • ${totalPrice} DH`}
                 </span>
-                {!isOutOfStock && <ArrowRight className="w-4 h-4" />}
+                {!isVariantOutOfStock && <ArrowRight className="w-4 h-4" />}
               </button>
             </div>
 

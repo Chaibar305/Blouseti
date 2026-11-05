@@ -3,11 +3,14 @@
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { PRODUCTS } from '@/data/products';
+import { ColorSizeVariant } from '@/types';
 
 export interface ColorVariant {
   name: string;
   hex: string;
-  in_stock: boolean;
+  image_url?: string;
+  sizes?: ColorSizeVariant[];
+  in_stock?: boolean;
 }
 
 export interface SizeVariant {
@@ -31,6 +34,7 @@ export interface DbProduct {
   images: string[];
   color_variants?: ColorVariant[];
   size_variants?: SizeVariant[];
+  embroidery_price?: number;
   is_active: boolean;
   created_at: string;
 }
@@ -50,6 +54,7 @@ let fallbackProducts: DbProduct[] = PRODUCTS.map((p, idx) => ({
   colors: p.colors.map((c) => c.name),
   sizes: p.sizes,
   images: p.colors.map((c) => c.image),
+  embroidery_price: p.id.includes('pack') || p.category === 'packs' ? 0 : 45,
   color_variants: p.colors.map((c) => ({
     name: c.name,
     hex: c.hex,
@@ -121,6 +126,7 @@ export async function createProductAction(product: Omit<DbProduct, 'id' | 'creat
       images: product.images,
       color_variants: product.color_variants || [],
       size_variants: product.size_variants || [],
+      embroidery_price: product.embroidery_price ?? 45,
       is_active: product.is_active ?? true,
     };
 
@@ -189,6 +195,10 @@ export async function updateProductAction(id: string, product: Partial<Omit<DbPr
     revalidatePath('/admin/products');
     revalidatePath('/admin');
     revalidatePath('/');
+    revalidatePath('/products/[slug]', 'page');
+    if (data?.slug) {
+      revalidatePath(`/products/${data.slug}`);
+    }
     return { success: true, product: data || fallbackProducts.find((p) => p.id === id) };
   } catch (err) {
     console.error('Error updating product:', err);
@@ -198,6 +208,7 @@ export async function updateProductAction(id: string, product: Partial<Omit<DbPr
     revalidatePath('/admin/products');
     revalidatePath('/admin');
     revalidatePath('/');
+    revalidatePath('/products/[slug]', 'page');
     return { success: true, product: fallbackProducts.find((p) => p.id === id) };
   }
 }
@@ -311,11 +322,15 @@ export async function getProductBySlugAction(
     const supabase = createAdminClient();
 
     // 1. Chercher dans la table Supabase
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .or(`slug.eq.${cleanSlug},id.eq.${cleanSlug}`)
-      .maybeSingle();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanSlug);
+    let query = supabase.from('products').select('*');
+    if (isUuid) {
+      query = query.or(`slug.eq.${cleanSlug},id.eq.${cleanSlug}`);
+    } else {
+      query = query.eq('slug', cleanSlug);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     const { mapDbProductToProduct } = await import('@/lib/products-helper');
 

@@ -1,23 +1,34 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Product, ProductCategory } from '@/types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Product, ProductCategory, Category } from '@/types';
 import { PRODUCTS } from '@/data/products';
 import { getDbProductsAction, DbProduct } from '@/app/actions/products';
-import { mapDbProductToProduct, filterActiveProducts } from '@/lib/products-helper';
+import { getCategoriesAction } from '@/app/actions/categories';
+import { FALLBACK_CATEGORIES } from '@/data/categories';
+import { mapDbProductToProduct, filterActiveProducts, normalizeCategory } from '@/lib/products-helper';
 import ProductCard from './ProductCard';
-import { Sparkles, CheckCircle2 } from 'lucide-react';
+import { Sparkles, CheckCircle2, ChefHat, UtensilsCrossed, Stethoscope } from 'lucide-react';
 
 interface ProductListProps {
   initialDbProducts?: DbProduct[];
+  initialCategories?: Category[];
 }
 
-export default function ProductList({ initialDbProducts }: ProductListProps) {
+export default function ProductList({
+  initialDbProducts,
+  initialCategories,
+}: ProductListProps) {
   const [activeCategory, setActiveCategory] = useState<ProductCategory>('all');
+  const [dbCategories, setDbCategories] = useState<Category[]>(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      return initialCategories;
+    }
+    return FALLBACK_CATEGORIES;
+  });
+  const [isLoading, setIsLoading] = useState(!initialDbProducts || initialDbProducts.length === 0);
 
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Initial state empty until Supabase returns active products
+  // Initial state populated from server props
   const [products, setProducts] = useState<Product[]>(() => {
     if (initialDbProducts && initialDbProducts.length > 0) {
       return filterActiveProducts(initialDbProducts.map(mapDbProductToProduct));
@@ -25,68 +36,125 @@ export default function ProductList({ initialDbProducts }: ProductListProps) {
     return [];
   });
 
-  // Fetch latest products from Supabase and filter out masked (is_active: false) products
-  const refreshProducts = async () => {
+  // Fetch latest products and categories from Supabase (client updates)
+  const refreshData = async () => {
     try {
-      const res = await getDbProductsAction();
-      if (res && res.success && res.products) {
-        const mapped = res.products.map(mapDbProductToProduct);
+      const [prodRes, catRes] = await Promise.all([
+        getDbProductsAction(),
+        getCategoriesAction(),
+      ]);
+
+      if (prodRes && prodRes.success && prodRes.products) {
+        const mapped = prodRes.products.map(mapDbProductToProduct);
         const activeOnly = filterActiveProducts(mapped);
         setProducts(activeOnly);
       }
+
+      if (catRes && catRes.success && catRes.categories) {
+        setDbCategories(catRes.categories);
+      }
     } catch (err) {
-      console.warn('Error refreshing products in ProductList:', err);
+      console.warn('Error refreshing data in ProductList:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    refreshProducts();
+    // Only fetch on client if initial products were not provided by SSR
+    if (!initialDbProducts || initialDbProducts.length === 0) {
+      refreshData();
+    }
 
     // Auto-refresh when user switches back to this browser tab (e.g. from /admin/products)
     const handleFocus = () => {
-      refreshProducts();
+      refreshData();
     };
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
-  // Handle URL hash navigation (e.g. #blouses, #scrubs)
+  // List of active categories from Supabase that are active or have products
+  const displayCategories = useMemo(() => {
+    const list: { id: string; label: string; icon?: string; count: number }[] = [
+      { id: 'all', label: 'Toutes les Tenues', icon: '✨', count: products.length },
+    ];
+
+    dbCategories.forEach((cat) => {
+      const count = products.filter(
+        (p) =>
+          normalizeCategory(p.category) === cat.slug ||
+          p.category === cat.slug ||
+          p.category.startsWith(cat.slug)
+      ).length;
+
+      // Include if active or has products
+      if (cat.is_active || count > 0) {
+        list.push({
+          id: cat.slug,
+          label: cat.name,
+          icon: cat.icon,
+          count,
+        });
+      }
+    });
+
+    return list;
+  }, [dbCategories, products]);
+
+  // Handle URL hash navigation (e.g. #cuisine, #hotellerie, #scrub, #blouse, #catalogue)
   useEffect(() => {
     const handleHash = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (['scrubs', 'blouses', 'vestes', 'packs'].includes(hash)) {
-        setActiveCategory(hash as ProductCategory);
+      const rawHash = window.location.hash.replace('#', '').toLowerCase();
+      // On homepage / or when navigating to #catalogue, #all, #collection: show ALL outfits
+      if (!rawHash || rawHash === 'catalogue' || rawHash === 'all' || rawHash === 'collection') {
+        setActiveCategory('all');
+        return;
+      }
+      const normalized = normalizeCategory(rawHash);
+      const match = displayCategories.find(
+        (c) => c.id === rawHash || c.id === normalized
+      );
+      if (match) {
+        setActiveCategory(match.id);
+      } else {
+        setActiveCategory('all');
       }
     };
     handleHash();
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
-  }, []);
+  }, [displayCategories]);
 
-  const categories: { id: ProductCategory; label: string; icon: string }[] = [
-    { id: 'all', label: 'Toute la Collection', icon: '✨' },
-    { id: 'scrubs', label: 'Scrubs Médicaux', icon: '🩺' },
-    { id: 'blouses', label: 'Blouses Blanches', icon: '🥼' },
-    { id: 'vestes', label: 'Vestes & Polaires', icon: '🧥' },
-    { id: 'packs', label: 'Packs Duo Soignants', icon: '🎁' },
-  ];
-
-  // Dynamic counts reflecting strictly ACTIVE products
-  const categoryCounts: Record<ProductCategory, number> = {
-    all: products.length,
-    scrubs: products.filter((p) => p.category === 'scrubs').length,
-    blouses: products.filter((p) => p.category === 'blouses').length,
-    vestes: products.filter((p) => p.category === 'vestes').length,
-    packs: products.filter((p) => p.category === 'packs').length,
+  // Render appropriate icons matching each professional category
+  const renderTabIcon = (slug: string, fallbackIcon?: string) => {
+    if (slug === 'cuisine') return <ChefHat className="w-4 h-4 text-amber-500" />;
+    if (slug === 'hotellerie') return <UtensilsCrossed className="w-4 h-4 text-sky-500" />;
+    if (slug === 'scrub' || slug === 'scrubs') return <Stethoscope className="w-4 h-4 text-sky-500" />;
+    if (slug === 'all') return <Sparkles className="w-4 h-4 text-sky-400" />;
+    return <span className="text-sm leading-none">{fallbackIcon || '👔'}</span>;
   };
 
-  const filteredProducts =
-    activeCategory === 'all'
-      ? products
-      : products.filter((p) => p.category === activeCategory);
+  const { filteredProducts, otherProducts } = useMemo(() => {
+    if (activeCategory === 'all') {
+      return { filteredProducts: products, otherProducts: [] };
+    }
+    const matched: Product[] = [];
+    const others: Product[] = [];
+    products.forEach((p) => {
+      if (
+        normalizeCategory(p.category) === activeCategory ||
+        p.category === activeCategory ||
+        p.category.startsWith(activeCategory)
+      ) {
+        matched.push(p);
+      } else {
+        others.push(p);
+      }
+    });
+    return { filteredProducts: matched, otherProducts: others };
+  }, [products, activeCategory]);
 
   return (
     <section id="catalogue" className="py-16 bg-slate-50/60 relative">
@@ -98,7 +166,7 @@ export default function ProductList({ initialDbProducts }: ProductListProps) {
             <span>Catalogue Officiel Blouseti.shop</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#1B2A4A] tracking-tight">
-            Tenues & Uniformes Médicaux Premium
+            Tenues Professionnelles Médicales, Cuisine &amp; Hôtellerie
           </h2>
           <p className="mt-2 text-sm sm:text-base text-slate-600">
             Choisissez votre modèle, sélectionnez votre taille et votre couleur. Commandez en 1 clic sans payer d’avance (Paiement à la livraison partout au Maroc).
@@ -107,29 +175,36 @@ export default function ProductList({ initialDbProducts }: ProductListProps) {
 
         {/* Category Navigation Tabs */}
         <div className="flex items-center justify-start sm:justify-center overflow-x-auto pb-4 mb-10 gap-2 no-scrollbar">
-          {categories.map((cat) => {
+          {displayCategories.map((cat) => {
             const isActive = activeCategory === cat.id;
-            const count = categoryCounts[cat.id];
 
             return (
               <button
                 key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
+                onClick={() => {
+                  setActiveCategory(cat.id);
+                  window.history.replaceState(null, '', cat.id === 'all' ? '#catalogue' : `#${cat.id}`);
+                }}
                 className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer shadow-xs ${
                   isActive
                     ? 'bg-[#1B2A4A] text-white shadow-md scale-102 ring-2 ring-[#1B2A4A]/20'
                     : 'bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80'
                 }`}
               >
-                <span>{cat.icon}</span>
+                {renderTabIcon(cat.id, cat.icon)}
                 <span>{cat.label}</span>
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                     isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
                   }`}
                 >
-                  {count}
+                  {cat.count}
                 </span>
+                {(cat.id === 'cuisine' || cat.id === 'hotellerie') && (
+                  <span className="text-[9px] bg-amber-500 text-white font-extrabold px-1.5 py-0.2 rounded-full uppercase tracking-wider">
+                    Nouveau
+                  </span>
+                )}
               </button>
             );
           })}
@@ -151,12 +226,86 @@ export default function ProductList({ initialDbProducts }: ProductListProps) {
             ))}
           </div>
         ) : filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {filteredProducts.map((product) => (
-              <div key={product.id} id={product.category}>
-                <ProductCard product={product} />
+          <div className="space-y-12">
+            {/* Active filter banner with instant reset button */}
+            {activeCategory !== 'all' && (
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-200/90 rounded-2xl p-4 sm:px-6 shadow-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600">
+                    {renderTabIcon(activeCategory)}
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-500 uppercase tracking-wider font-bold block">
+                      Rayon sélectionné
+                    </span>
+                    <span className="text-sm font-extrabold text-[#1B2A4A]">
+                      {displayCategories.find((c) => c.id === activeCategory)?.label || activeCategory}
+                      <span className="text-xs text-slate-500 font-semibold ml-1.5">
+                        ({filteredProducts.length} modèle{filteredProducts.length > 1 ? 's' : ''})
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setActiveCategory('all');
+                    window.history.replaceState(null, '', '#catalogue');
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold bg-[#1B2A4A] hover:bg-[#111C32] text-white px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-xs active:scale-95"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Afficher toutes les tenues ({products.length})</span>
+                </button>
               </div>
-            ))}
+            )}
+
+            {/* Filtered Products Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {filteredProducts.map((product) => (
+                <div key={product.id} id={product.category}>
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+
+            {/* Other Outfits Section: always visible so visitors see the complete collection */}
+            {otherProducts.length > 0 && (
+              <div className="pt-10 border-t border-slate-200/80">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-extrabold text-[#1B2A4A] flex items-center gap-2">
+                      <span>Découvrez également toutes nos autres tenues</span>
+                      <span className="text-xs font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">
+                        {otherProducts.length}
+                      </span>
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                      Explorez l’ensemble de nos collections médicales, hôtelières et culinaires disponibles en stock
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setActiveCategory('all');
+                      window.history.replaceState(null, '', '#catalogue');
+                    }}
+                    className="self-start sm:self-auto inline-flex items-center gap-1.5 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 px-4 py-2 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <span>Voir tout le catalogue ({products.length})</span>
+                    <span>→</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                  {otherProducts.map((product) => (
+                    <div key={product.id} id={product.category}>
+                      <ProductCard product={product} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* Reassuring empty state when category has no active items */

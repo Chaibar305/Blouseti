@@ -21,6 +21,7 @@ import {
   UploadCloud,
   Loader2,
   ImageIcon,
+  ChevronDown,
 } from 'lucide-react';
 import {
   getDbProductsAction,
@@ -32,8 +33,56 @@ import {
   DbProduct,
   ColorVariant,
 } from '@/app/actions/products';
+import {
+  getCategoriesAction,
+  addCategoryAction,
+} from '@/app/actions/categories';
+import { FALLBACK_CATEGORIES } from '@/data/categories';
+import { ColorSizeVariant, Category } from '@/types';
 
 const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+export interface AdminColorItem {
+  name: string;
+  hex: string;
+  image_url?: string;
+  sizes: ColorSizeVariant[];
+}
+
+const buildDefaultColorSizes = (
+  existingSizes?: ColorSizeVariant[],
+  fallbackActiveSizes?: string[],
+  defaultStock: number = 5
+): ColorSizeVariant[] => {
+  return DEFAULT_SIZES.map((sizeName) => {
+    const existing = existingSizes?.find((s) => s.size === sizeName);
+    if (existing) {
+      return {
+        size: sizeName,
+        stock: typeof existing.stock === 'number' ? Math.max(0, existing.stock) : 0,
+        active: existing.active !== false,
+      };
+    }
+    const isActive =
+      fallbackActiveSizes && fallbackActiveSizes.length > 0
+        ? fallbackActiveSizes.includes(sizeName)
+        : true;
+    return {
+      size: sizeName,
+      stock: isActive ? defaultStock : 0,
+      active: isActive,
+    };
+  });
+};
+
+const calculateTotalStock = (colors: AdminColorItem[]): number => {
+  return colors.reduce((acc, col) => {
+    const colorTotal = (col.sizes || []).reduce((sum, s) => {
+      return s.active ? sum + (Number(s.stock) || 0) : sum;
+    }, 0);
+    return acc + colorTotal;
+  }, 0);
+};
 
 const PRESET_COLORS: { name: string; hex: string }[] = [
   { name: 'Bleu Marine Médical', hex: '#1B2A4A' },
@@ -51,6 +100,14 @@ export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
+  // Dynamic Categories from Supabase
+  const [categories, setCategories] = useState<Category[]>(FALLBACK_CATEGORIES);
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryIcon, setNewCategoryIcon] = useState('👨🍳');
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -62,16 +119,28 @@ export default function AdminProductsPage() {
 
   // Form Fields State
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<'scrub' | 'blouse' | 'polaire' | 'pack'>('scrub');
+  const [category, setCategory] = useState<string>('scrub');
   const [price, setPrice] = useState('349');
   const [promoPrice, setPromoPrice] = useState('');
+  const [embroideryPrice, setEmbroideryPrice] = useState('20');
   const [stockQuantity, setStockQuantity] = useState('20');
   const [isOutOfStock, setIsOutOfStock] = useState(false);
   const [selectedSizes, setSelectedSizes] = useState<string[]>(['S', 'M', 'L', 'XL']);
-  const [colorList, setColorList] = useState<Array<{ name: string; hex: string }>>([
-    { name: 'Bleu Marine Médical', hex: '#1B2A4A' },
-    { name: 'Vert Sauge Apaisant', hex: '#7D9D8B' },
+  const [colorList, setColorList] = useState<AdminColorItem[]>([
+    {
+      name: 'Bleu Marine Médical',
+      hex: '#1B2A4A',
+      image_url: '/images/scrub-navy.jpg',
+      sizes: DEFAULT_SIZES.map((size) => ({ size, stock: 5, active: true })),
+    },
+    {
+      name: 'Vert Sauge Apaisant',
+      hex: '#7D9D8B',
+      image_url: '/images/scrub-sage.jpg',
+      sizes: DEFAULT_SIZES.map((size) => ({ size, stock: 5, active: true })),
+    },
   ]);
+  const [expandedColorIndex, setExpandedColorIndex] = useState<number | null>(null);
   const [customColorName, setCustomColorName] = useState('');
   const [customColorHex, setCustomColorHex] = useState('#1B2A4A');
   const [description, setDescription] = useState('');
@@ -97,30 +166,85 @@ export default function AdminProductsPage() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const res = await getCategoriesAction();
+      if (res && res.success && res.categories) {
+        setCategories(res.categories);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
+
+  const handleCreateCategory = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newCategoryName.trim()) return;
+    setIsSavingCategory(true);
+    setCategoryError(null);
+    try {
+      const res = await addCategoryAction({
+        name: newCategoryName.trim(),
+        icon: newCategoryIcon.trim() || '👔',
+      });
+      if (res.success && res.category) {
+        setCategories((prev) => {
+          const exists = prev.some((c) => c.slug === res.category!.slug);
+          return exists ? prev : [...prev, res.category!];
+        });
+        setCategory(res.category.slug);
+        setNewCategoryName('');
+        setIsCreatingCategory(false);
+      } else {
+        setCategoryError(res.error || "Erreur lors de la création");
+      }
+    } catch (err: any) {
+      setCategoryError(err.message || "Erreur lors de la création");
+    } finally {
+      setIsSavingCategory(false);
+    }
+  };
 
   // Open modal in CREATE mode
   const handleOpenCreateModal = () => {
     setModalMode('create');
     setEditingId(null);
     setTitle('');
-    setCategory('scrub');
+    setCategory(categories[0]?.slug || 'scrub');
+    setIsCreatingCategory(false);
+    setCategoryError(null);
     setPrice('349');
     setPromoPrice('');
-    setStockQuantity('25');
+    setEmbroideryPrice('45');
     setIsOutOfStock(false);
     setSelectedSizes(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
-    setColorList([
-      { name: 'Bleu Marine Médical', hex: '#1B2A4A' },
-      { name: 'Vert Sauge Apaisant', hex: '#7D9D8B' },
-    ]);
-    setDescription('Ensemble médical ergonomique 4-Way Stretch respirant et infroissable.');
+    const initialColors: AdminColorItem[] = [
+      {
+        name: 'Bleu Marine Médical',
+        hex: '#1B2A4A',
+        image_url: '/images/scrub-navy.jpg',
+        sizes: DEFAULT_SIZES.map((size) => ({ size, stock: 5, active: true })),
+      },
+      {
+        name: 'Vert Sauge Apaisant',
+        hex: '#7D9D8B',
+        image_url: '/images/scrub-sage.jpg',
+        sizes: DEFAULT_SIZES.map((size) => ({ size, stock: 5, active: true })),
+      },
+    ];
+    setColorList(initialColors);
+    setStockQuantity(String(calculateTotalStock(initialColors)));
+    setExpandedColorIndex(null);
+    setDescription('Ensemble ergonomique respirant et infroissable.');
     setLongDescription(
-      '• Composition : 72% Polyester, 21% Rayonne, 7% Élasthanne.\n• Tissu technique 4-Way Stretch ultra-respirant, infroissable et anti-taches.\n• Résistance prouvée aux lavages fréquents en machine jusqu’à 60°C.'
+      '• Composition haute résistance conçue pour un usage professionnel intensif.\n• Tissu respirant, infroissable et anti-taches.\n• Résistance prouvée aux lavages fréquents en machine jusqu’à 60°C.'
     );
-    setUploadedImages(['/images/scrub-navy.jpg']);
+    setUploadedImages(['/images/scrub-navy.jpg', '/images/scrub-sage.jpg']);
     setUploadError(null);
     setIsModalOpen(true);
   };
@@ -130,24 +254,60 @@ export default function AdminProductsPage() {
     setModalMode('edit');
     setEditingId(p.id);
     setTitle(p.title);
-    setCategory((p.category as any) || 'scrub');
+    setCategory(p.category || 'scrub');
+    setIsCreatingCategory(false);
+    setCategoryError(null);
     setPrice(String(p.price));
     setPromoPrice(p.promo_price ? String(p.promo_price) : '');
-    setStockQuantity(String(p.stock_quantity ?? 20));
+    setEmbroideryPrice(
+      p.embroidery_price !== undefined && p.embroidery_price !== null
+        ? String(p.embroidery_price)
+        : '45'
+    );
     setIsOutOfStock(Boolean(p.is_out_of_stock));
     setSelectedSizes(p.sizes && p.sizes.length > 0 ? p.sizes : ['S', 'M', 'L']);
 
+    const productImages = p.images && p.images.length > 0 ? p.images : ['/images/scrub-navy.jpg'];
+    setUploadedImages(productImages);
+
+    let initialColors: AdminColorItem[] = [];
+
     if (p.color_variants && p.color_variants.length > 0) {
-      setColorList(p.color_variants.map((c) => ({ name: c.name, hex: c.hex })));
+      initialColors = p.color_variants.map((c, idx) => ({
+        name: c.name,
+        hex: c.hex,
+        image_url: c.image_url || productImages[idx] || productImages[0] || '/images/scrub-navy.jpg',
+        sizes: buildDefaultColorSizes(
+          c.sizes,
+          p.sizes,
+          Math.max(1, Math.round((p.stock_quantity ?? 20) / ((p.sizes?.length || 4) * (p.color_variants?.length || 1))))
+        ),
+      }));
     } else if (p.colors && p.colors.length > 0) {
-      setColorList(p.colors.map((c) => ({ name: c, hex: '#1B2A4A' })));
+      initialColors = p.colors.map((c, idx) => ({
+        name: c,
+        hex: idx === 0 ? '#1B2A4A' : '#7D9D8B',
+        image_url: productImages[idx] || productImages[0] || '/images/scrub-navy.jpg',
+        sizes: buildDefaultColorSizes(undefined, p.sizes, 5),
+      }));
     } else {
-      setColorList([{ name: 'Bleu Marine Médical', hex: '#1B2A4A' }]);
+      initialColors = [
+        {
+          name: 'Bleu Marine Médical',
+          hex: '#1B2A4A',
+          image_url: productImages[0] || '/images/scrub-navy.jpg',
+          sizes: buildDefaultColorSizes(undefined, p.sizes, 5),
+        },
+      ];
     }
+
+    setColorList(initialColors);
+    const computedTotal = calculateTotalStock(initialColors);
+    setStockQuantity(String(computedTotal > 0 ? computedTotal : (p.stock_quantity ?? 0)));
+    setExpandedColorIndex(null);
 
     setDescription(p.description || '');
     setLongDescription(p.long_description || p.description || '');
-    setUploadedImages(p.images && p.images.length > 0 ? p.images : ['/images/scrub-navy.jpg']);
     setUploadError(null);
     setIsModalOpen(true);
   };
@@ -159,23 +319,108 @@ export default function AdminProductsPage() {
     );
   };
 
+  // Toggle active status of a size within a specific color
+  const handleToggleColorSize = (colorIndex: number, sizeName: string) => {
+    setColorList((prev) => {
+      const next = prev.map((col, idx) => {
+        if (idx !== colorIndex) return col;
+        const nextSizes = col.sizes.map((s) => {
+          if (s.size !== sizeName) return s;
+          const willBeActive = !s.active;
+          return {
+            ...s,
+            active: willBeActive,
+            stock: willBeActive && s.stock === 0 ? 5 : s.stock,
+          };
+        });
+        return { ...col, sizes: nextSizes };
+      });
+      setStockQuantity(String(calculateTotalStock(next)));
+      return next;
+    });
+  };
+
+  // Update stock number for a specific size within a color
+  const handleUpdateColorSizeStock = (colorIndex: number, sizeName: string, newStock: number) => {
+    const safeStock = Math.max(0, isNaN(newStock) ? 0 : newStock);
+    setColorList((prev) => {
+      const next = prev.map((col, idx) => {
+        if (idx !== colorIndex) return col;
+        const nextSizes = col.sizes.map((s) => {
+          if (s.size !== sizeName) return s;
+          return { ...s, stock: safeStock };
+        });
+        return { ...col, sizes: nextSizes };
+      });
+      setStockQuantity(String(calculateTotalStock(next)));
+      return next;
+    });
+  };
+
   // Add a color
   const handleAddColor = () => {
     if (!customColorName.trim()) return;
-    setColorList((prev) => [
-      ...prev,
-      { name: customColorName.trim(), hex: customColorHex },
-    ]);
+    const defaultImg =
+      uploadedImages[colorList.length % Math.max(uploadedImages.length, 1)] ||
+      uploadedImages[0] ||
+      '/images/scrub-navy.jpg';
+    const newColor: AdminColorItem = {
+      name: customColorName.trim(),
+      hex: customColorHex,
+      image_url: defaultImg,
+      sizes: buildDefaultColorSizes(undefined, selectedSizes, 5),
+    };
+    setColorList((prev) => {
+      const next = [...prev, newColor];
+      setStockQuantity(String(calculateTotalStock(next)));
+      return next;
+    });
     setCustomColorName('');
   };
 
   const handleAddPresetColor = (preset: { name: string; hex: string }) => {
     if (colorList.some((c) => c.name === preset.name)) return;
-    setColorList((prev) => [...prev, preset]);
+    const defaultImg =
+      uploadedImages[colorList.length % Math.max(uploadedImages.length, 1)] ||
+      uploadedImages[0] ||
+      '/images/scrub-navy.jpg';
+    const newColor: AdminColorItem = {
+      ...preset,
+      image_url: defaultImg,
+      sizes: buildDefaultColorSizes(undefined, selectedSizes, 5),
+    };
+    setColorList((prev) => {
+      const next = [...prev, newColor];
+      setStockQuantity(String(calculateTotalStock(next)));
+      return next;
+    });
   };
 
   const handleRemoveColor = (index: number) => {
-    setColorList((prev) => prev.filter((_, i) => i !== index));
+    setColorList((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      setStockQuantity(String(calculateTotalStock(next)));
+      return next;
+    });
+    if (expandedColorIndex === index) {
+      setExpandedColorIndex(null);
+    }
+  };
+
+  const handleUpdateColorImage = (colorIndex: number, imageUrl: string) => {
+    setColorList((prev) =>
+      prev.map((col, idx) => (idx === colorIndex ? { ...col, image_url: imageUrl } : col))
+    );
+    if (imageUrl && !uploadedImages.includes(imageUrl)) {
+      setUploadedImages((prev) => [...prev, imageUrl]);
+    }
+  };
+
+  const handleAssignImageToColor = (imageUrl: string, colorName: string) => {
+    if (!colorName) return;
+    setColorList((prev) =>
+      prev.map((col) => (col.name === colorName ? { ...col, image_url: imageUrl } : col))
+    );
   };
 
   // Handle Drag & Drop / File Select for Supabase Storage Upload
@@ -230,15 +475,43 @@ export default function AdminProductsPage() {
     try {
       const parsedPrice = parseFloat(price) || 0;
       const parsedPromo = promoPrice ? parseFloat(promoPrice) : null;
-      const parsedStock = parseInt(stockQuantity, 10) || 0;
+      const parsedEmbroideryPrice = parseFloat(embroideryPrice) >= 0 ? parseFloat(embroideryPrice) : 20;
+      const computedStock = calculateTotalStock(colorList);
+      const parsedStock = parseInt(stockQuantity, 10) || computedStock;
       const colorNames = colorList.map((c) => c.name);
+      // Enregistre dans Supabase le tableau color_variants sous la forme : [{ name, hex, image_url, sizes }]
       const colorVariants: ColorVariant[] = colorList.map((c) => ({
         name: c.name,
         hex: c.hex,
-        in_stock: true,
+        image_url: c.image_url || uploadedImages[0] || '/images/scrub-navy.jpg',
+        sizes: c.sizes,
+        in_stock: c.sizes.some((s) => s.active && s.stock > 0),
       }));
+
+      // Tailles actives synchronisées
+      const activeSizesAcrossColors = Array.from(
+        new Set(colorList.flatMap((c) => c.sizes.filter((s) => s.active).map((s) => s.size)))
+      );
+      const finalSizes =
+        activeSizesAcrossColors.length > 0 ? activeSizesAcrossColors : selectedSizes;
+
+      // La liste images du produit doit contenir l'ensemble de ces URLs, avec en premier l'image de la couleur par défaut
+      const orderedImages: string[] = [];
+      if (colorVariants[0]?.image_url) {
+        orderedImages.push(colorVariants[0].image_url);
+      }
+      colorVariants.slice(1).forEach((cv) => {
+        if (cv.image_url && !orderedImages.includes(cv.image_url)) {
+          orderedImages.push(cv.image_url);
+        }
+      });
+      uploadedImages.forEach((img) => {
+        if (img && !orderedImages.includes(img)) {
+          orderedImages.push(img);
+        }
+      });
       const finalImages =
-        uploadedImages.length > 0 ? uploadedImages : ['/images/scrub-navy.jpg'];
+        orderedImages.length > 0 ? orderedImages : ['/images/scrub-navy.jpg'];
 
       if (modalMode === 'create') {
         const slug = title
@@ -255,11 +528,12 @@ export default function AdminProductsPage() {
           long_description: longDescription,
           price: parsedPrice,
           promo_price: parsedPromo,
+          embroidery_price: parsedEmbroideryPrice,
           category,
           stock_quantity: parsedStock,
           is_out_of_stock: isOutOfStock,
           colors: colorNames,
-          sizes: selectedSizes,
+          sizes: finalSizes,
           images: finalImages,
           color_variants: colorVariants,
           is_active: true,
@@ -271,11 +545,12 @@ export default function AdminProductsPage() {
           long_description: longDescription,
           price: parsedPrice,
           promo_price: parsedPromo,
+          embroidery_price: parsedEmbroideryPrice,
           category,
           stock_quantity: parsedStock,
           is_out_of_stock: isOutOfStock,
           colors: colorNames,
-          sizes: selectedSizes,
+          sizes: finalSizes,
           images: finalImages,
           color_variants: colorVariants,
         });
@@ -392,28 +667,51 @@ export default function AdminProductsPage() {
 
         {/* Category Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
-          {[
-            { id: 'all', label: 'Toutes les tenues', count: products.length },
-            { id: 'scrub', label: 'Scrubs', count: products.filter((p) => p.category.startsWith('scrub')).length },
-            { id: 'blouse', label: 'Blouses', count: products.filter((p) => p.category.startsWith('blouse')).length },
-            { id: 'polaire', label: 'Polaires', count: products.filter((p) => p.category.startsWith('polaire') || p.category.startsWith('veste')).length },
-            { id: 'pack', label: 'Packs', count: products.filter((p) => p.category.startsWith('pack')).length },
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setCategoryFilter(cat.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                categoryFilter === cat.id
-                  ? 'bg-[#1B2A4A] text-white shadow-xs'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          <button
+            type="button"
+            onClick={() => setCategoryFilter('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              categoryFilter === 'all'
+                ? 'bg-[#1B2A4A] text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <span>Toutes les tenues</span>
+            <span
+              className={`ml-1.5 text-[10px] px-1.5 py-0.2 rounded-full ${
+                categoryFilter === 'all' ? 'bg-white/20' : 'bg-slate-100'
               }`}
             >
-              <span>{cat.label}</span>
-              <span className={`ml-1.5 text-[10px] px-1.5 py-0.2 rounded-full ${categoryFilter === cat.id ? 'bg-white/20' : 'bg-slate-100'}`}>
-                {cat.count}
-              </span>
-            </button>
-          ))}
+              {products.length}
+            </span>
+          </button>
+          {categories.map((cat) => {
+            const count = products.filter(
+              (p) => p.category === cat.slug || p.category.startsWith(cat.slug)
+            ).length;
+            return (
+              <button
+                key={cat.slug}
+                type="button"
+                onClick={() => setCategoryFilter(cat.slug)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 ${
+                  categoryFilter === cat.slug
+                    ? 'bg-[#1B2A4A] text-white shadow-xs'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                <span>{cat.icon || '📁'}</span>
+                <span>{cat.name}</span>
+                <span
+                  className={`ml-0.5 text-[10px] px-1.5 py-0.2 rounded-full ${
+                    categoryFilter === cat.slug ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
       </div>
@@ -782,17 +1080,82 @@ export default function AdminProductsPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Catégorie</label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value as any)}
-                      className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 sm:py-3 font-medium"
-                    >
-                      <option value="scrub">🩺 Scrub Médical</option>
-                      <option value="blouse">🥼 Blouse Blanche</option>
-                      <option value="polaire">🧥 Veste Polaire</option>
-                      <option value="pack">🎁 Pack Économique</option>
-                    </select>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block font-bold text-slate-700">
+                        Catégorie <span className="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsCreatingCategory(!isCreatingCategory)}
+                        className="text-[11px] font-bold text-sky-600 hover:text-sky-800 transition-colors cursor-pointer"
+                      >
+                        {isCreatingCategory ? '✕ Annuler' : '+ Créer'}
+                      </button>
+                    </div>
+
+                    {!isCreatingCategory ? (
+                      <select
+                        value={category}
+                        onChange={(e) => {
+                          if (e.target.value === '__NEW__') {
+                            setIsCreatingCategory(true);
+                          } else {
+                            setCategory(e.target.value);
+                          }
+                        }}
+                        className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 sm:py-3 font-medium cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                      >
+                        {categories.map((cat) => (
+                          <option key={cat.slug} value={cat.slug}>
+                            {cat.icon || '📁'} {cat.name}
+                          </option>
+                        ))}
+                        <option value="__NEW__" className="font-bold text-sky-600">
+                          + Créer une nouvelle catégorie...
+                        </option>
+                      </select>
+                    ) : (
+                      <div className="bg-sky-50 border border-sky-200 rounded-xl p-2.5 space-y-2 animate-in fade-in duration-150">
+                        <span className="text-[10px] font-bold text-sky-900 block leading-tight">
+                          Nouveau rayon / catégorie :
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={newCategoryIcon}
+                            onChange={(e) => setNewCategoryIcon(e.target.value)}
+                            placeholder="Emoji"
+                            className="w-10 text-center text-sm bg-white border border-slate-300 rounded-lg py-1.5"
+                            title="Icône ou émoticône"
+                          />
+                          <input
+                            type="text"
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            placeholder="Ex: Cuisine, Hôtellerie..."
+                            className="flex-1 text-xs bg-white border border-slate-300 rounded-lg px-2 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-sky-500"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleCreateCategory();
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            disabled={isSavingCategory || !newCategoryName.trim()}
+                            onClick={handleCreateCategory}
+                            className="bg-[#1B2A4A] hover:bg-[#111C32] disabled:opacity-50 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
+                          >
+                            {isSavingCategory ? '...' : 'Ajouter'}
+                          </button>
+                        </div>
+                        {categoryError && (
+                          <p className="text-[10px] text-red-600 font-bold">{categoryError}</p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -822,14 +1185,70 @@ export default function AdminProductsPage() {
                     />
                   </div>
                 </div>
+
+                {/* Configuration Prix de la Broderie Personnalisée */}
+                <div className="bg-sky-50/70 border border-sky-100 rounded-2xl p-3.5 space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div>
+                      <label className="block font-bold text-[#1B2A4A] text-xs">
+                        Prix de la broderie personnalisée (DH) <span className="text-red-500">*</span>
+                      </label>
+                      <p className="text-[10px] text-slate-500">
+                        Tarif appliqué au prénom / fonction brodés sur la tenue
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-28">
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={embroideryPrice}
+                          onChange={(e) => setEmbroideryPrice(e.target.value)}
+                          placeholder="20"
+                          className="w-full text-xs sm:text-sm bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-[#1B2A4A] focus:outline-hidden focus:ring-2 focus:ring-sky-500 text-right pr-9"
+                        />
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                          DH
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setEmbroideryPrice(embroideryPrice === '0' ? '45' : '0')}
+                        className={`text-[11px] font-bold px-3 py-2 rounded-xl border transition-all cursor-pointer whitespace-nowrap ${
+                          embroideryPrice === '0'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                        }`}
+                        title="Cliquer pour basculer entre 0 DH (Offerte) et 45 DH"
+                      >
+                        {embroideryPrice === '0' ? '✓ Broderie Offerte' : 'Offrir (0 DH)'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                    <span>💡</span>
+                    <span>
+                      <strong className="text-slate-700">Conseil :</strong> Mettre à <strong>0</strong> pour afficher le badge vert <span className="text-emerald-700 font-bold bg-emerald-100 px-1 py-0.2 rounded">OFFERTE (0 DH)</span> sur la fiche produit et ne rien facturer.
+                    </span>
+                  </p>
+                </div>
               </div>
 
               {/* Section 2: Gestion du Stock Centralisé */}
               <div className="space-y-3 pt-3 border-t border-slate-100">
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-sky-700 flex items-center gap-1.5">
-                  <PackageCheck className="w-3.5 h-3.5" />
-                  <span>2. Gestion des Stocks</span>
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-sky-700 flex items-center gap-1.5">
+                    <PackageCheck className="w-3.5 h-3.5" />
+                    <span>2. Gestion des Stocks</span>
+                  </h4>
+                  <span className="text-[10px] font-bold text-sky-800 bg-sky-100 border border-sky-200 px-2 py-0.5 rounded-full">
+                    Somme des variantes : {calculateTotalStock(colorList)} pcs
+                  </span>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-slate-50 p-4 rounded-2xl border border-slate-200">
                   <div>
@@ -844,7 +1263,7 @@ export default function AdminProductsPage() {
                       className="w-full text-sm font-black bg-white border border-slate-300 rounded-xl px-3 py-2.5"
                     />
                     <p className="text-[10px] text-slate-400 mt-1">
-                      Un stock inférieur à 5 affichera le badge &quot;Stock faible&quot;
+                      Calculée automatiquement par la somme des tailles actives par couleur.
                     </p>
                   </div>
 
@@ -874,7 +1293,7 @@ export default function AdminProductsPage() {
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-sky-700 flex items-center gap-1.5">
                     <SlidersHorizontal className="w-3.5 h-3.5" />
-                    <span>3. Sélecteur de Tailles</span>
+                    <span>3. Sélecteur de Tailles Général</span>
                   </h4>
                   <span className="text-[11px] text-slate-400">Cliquez pour activer/désactiver</span>
                 </div>
@@ -900,33 +1319,196 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Section 4: Gestionnaire des Couleurs */}
+              {/* Section 4: Gestionnaire des Couleurs & Association Photos */}
               <div className="space-y-3 pt-3 border-t border-slate-100">
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-sky-700 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>4. Couleurs Actives</span>
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-sky-700 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>4. Couleurs Actives, Photos &amp; Stocks par Taille</span>
+                  </h4>
+                  <span className="text-[10px] text-slate-400">Chaque couleur gère ses photos et ses tailles</span>
+                </div>
 
-                {/* Active Color Badges */}
-                <div className="flex flex-wrap gap-2 min-h-8">
+                {/* Active Color Cards with Image Selector & Size/Stock Dropdown */}
+                <div className="space-y-3">
                   {colorList.map((col, idx) => (
                     <div
                       key={idx}
-                      className="inline-flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-medium"
+                      className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-3 transition-colors hover:border-slate-300"
                     >
-                      <span
-                        className="w-3.5 h-3.5 rounded-full border border-black/20 shadow-2xs shrink-0"
-                        style={{ backgroundColor: col.hex }}
-                      />
-                      <span>{col.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveColor(idx)}
-                        className="text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
-                        title="Supprimer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
+                      {/* Top Row: Color info + Linked Photo + Dropdown Trigger + Delete */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        {/* Left: Swatch + Name + Hex */}
+                        <div className="flex items-center gap-2.5 min-w-[170px]">
+                          <span
+                            className="w-5 h-5 rounded-full border border-black/20 shadow-2xs shrink-0"
+                            style={{ backgroundColor: col.hex }}
+                          />
+                          <div className="min-w-0">
+                            <span className="font-bold text-slate-900 text-xs block leading-tight truncate">
+                              {col.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              {col.hex} {idx === 0 ? '• Défaut' : ''}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Center: Linked Photo Selector */}
+                        <div className="flex items-center gap-2 flex-1">
+                          {col.image_url && (
+                            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-300 shrink-0 bg-white shadow-2xs">
+                              <Image
+                                src={col.image_url}
+                                alt={col.name}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          )}
+                          <select
+                            value={col.image_url || ''}
+                            onChange={(e) => handleUpdateColorImage(idx, e.target.value)}
+                            className="flex-1 text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 font-medium text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                          >
+                            <option value="">Attribuer une photo...</option>
+                            {uploadedImages.map((imgUrl, imgIdx) => (
+                              <option key={imgUrl} value={imgUrl}>
+                                Photo {imgIdx + 1} {imgIdx === 0 ? '(Principale)' : ''} : {imgUrl.split('/').pop()}
+                              </option>
+                            ))}
+                            {[
+                              { name: 'Scrub Marine', url: '/images/scrub-navy.jpg' },
+                              { name: 'Scrub Sauge', url: '/images/scrub-sage.jpg' },
+                              { name: 'Scrub Bordeaux', url: '/images/scrub-burgundy.jpg' },
+                              { name: 'Blouse Blanche', url: '/images/blouse-blanche.jpg' },
+                              { name: 'Veste Polaire', url: '/images/veste-polaire.jpg' },
+                            ]
+                              .filter((p) => !uploadedImages.includes(p.url))
+                              .map((p) => (
+                                <option key={p.url} value={p.url}>
+                                  + {p.name} ({p.url.split('/').pop()})
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+
+                        {/* Dropdown Toggle: Gérer tailles & stocks */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedColorIndex(expandedColorIndex === idx ? null : idx)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                              expandedColorIndex === idx
+                                ? 'bg-[#1B2A4A] text-white border-[#1B2A4A] shadow-xs'
+                                : 'bg-white hover:bg-sky-50 text-sky-800 border-sky-200 shadow-2xs'
+                            }`}
+                          >
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                            <span>Gérer tailles &amp; stocks</span>
+                            <span
+                              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                                expandedColorIndex === idx
+                                  ? 'bg-white/20 text-white'
+                                  : 'bg-sky-100 text-sky-900'
+                              }`}
+                            >
+                              {col.sizes.reduce((sum, s) => (s.active ? sum + (s.stock || 0) : sum), 0)} pcs
+                            </span>
+                            <ChevronDown
+                              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                                expandedColorIndex === idx ? 'rotate-180' : ''
+                              }`}
+                            />
+                          </button>
+
+                          {/* Remove Color Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveColor(idx)}
+                            className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                            title="Supprimer cette couleur"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Collapsible Panel: Tailles et Stocks pour cette couleur */}
+                      {expandedColorIndex === idx && (
+                        <div className="pt-3 border-t border-slate-200 space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px]">
+                            <span className="font-bold text-slate-800 flex items-center gap-1">
+                              <PackageCheck className="w-3.5 h-3.5 text-sky-600" />
+                              <span>Tailles disponibles et stocks pour &laquo; {col.name} &raquo; :</span>
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              Cochez pour activer • Renseignez le stock exact par taille
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                            {col.sizes.map((s) => {
+                              const isOutOfStock = s.active && (s.stock === 0 || !s.stock);
+                              return (
+                                <div
+                                  key={s.size}
+                                  className={`p-2.5 rounded-xl border transition-all flex flex-col justify-between gap-2 ${
+                                    !s.active
+                                      ? 'bg-slate-100/80 border-slate-200 opacity-50'
+                                      : isOutOfStock
+                                      ? 'bg-red-50/70 border-red-200'
+                                      : 'bg-white border-slate-200 shadow-2xs'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                                      <input
+                                        type="checkbox"
+                                        checked={s.active}
+                                        onChange={() => handleToggleColorSize(idx, s.size)}
+                                        className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300 cursor-pointer"
+                                      />
+                                      <span className="font-black text-xs text-slate-900">{s.size}</span>
+                                    </label>
+                                    <span
+                                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
+                                        !s.active
+                                          ? 'bg-slate-200 text-slate-600'
+                                          : isOutOfStock
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-emerald-100 text-emerald-800'
+                                      }`}
+                                    >
+                                      {!s.active ? 'Inactive' : isOutOfStock ? 'Épuisé' : 'En stock'}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      disabled={!s.active}
+                                      value={s.stock}
+                                      onChange={(e) =>
+                                        handleUpdateColorSizeStock(idx, s.size, parseInt(e.target.value, 10))
+                                      }
+                                      className={`w-full text-center py-1.5 text-xs font-bold rounded-lg border focus:outline-hidden focus:ring-2 focus:ring-sky-500 ${
+                                        !s.active
+                                          ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                                          : isOutOfStock
+                                          ? 'bg-white text-red-700 border-red-300 font-black'
+                                          : 'bg-slate-50 text-slate-900 border-slate-300'
+                                      }`}
+                                    />
+                                    <span className="text-[10px] text-slate-400 shrink-0">pcs</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -944,7 +1526,7 @@ export default function AdminProductsPage() {
                     type="text"
                     value={customColorName}
                     onChange={(e) => setCustomColorName(e.target.value)}
-                    placeholder="Nom couleur (ex: Vert Émeraude, Gris Anthracite)"
+                    placeholder="Nom couleur (ex: Vert Sauge, Gris Anthracite)"
                     className="flex-1 text-xs bg-white border border-slate-300 rounded-xl px-3 py-2.5 min-h-[42px]"
                   />
                   <button
@@ -982,7 +1564,7 @@ export default function AdminProductsPage() {
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-sky-700 flex items-center gap-1.5">
                     <UploadCloud className="w-3.5 h-3.5" />
-                    <span>5. Photos du Produit (Supabase Storage)</span>
+                    <span>5. Photos du Produit &amp; Attribution aux Couleurs</span>
                   </h4>
                   <span className="text-[10px] text-slate-400">PNG, JPG, WEBP jusqu&apos;à 5 Mo</span>
                 </div>
@@ -1046,7 +1628,7 @@ export default function AdminProductsPage() {
                   </div>
                 )}
 
-                {/* Uploaded Images Gallery Preview */}
+                {/* Uploaded Images Gallery Preview with Color Attribution Dropdown */}
                 {uploadedImages.length > 0 && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -1054,49 +1636,91 @@ export default function AdminProductsPage() {
                         Photos du catalogue ({uploadedImages.length}) :
                       </p>
                       <span className="text-[10px] text-slate-400">
-                        Cliquez sur une photo pour la mettre en 1ère position
+                        La 1ère photo correspond à la couleur par défaut
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                      {uploadedImages.map((url, idx) => (
-                        <div
-                          key={idx}
-                          className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs"
-                        >
-                          <Image
-                            src={url}
-                            alt={`Photo ${idx + 1}`}
-                            fill
-                            className="object-cover"
-                          />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {uploadedImages.map((url, idx) => {
+                        const assignedColors = colorList.filter((c) => c.image_url === url);
 
-                          {/* Primary badge */}
-                          {idx === 0 ? (
-                            <span className="absolute top-1.5 left-1.5 bg-[#1B2A4A] text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-xs z-10">
-                              ⭐ Principale
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleSetPrimaryImage(idx)}
-                              className="absolute top-1.5 left-1.5 bg-black/60 hover:bg-black/80 text-white text-[9px] font-medium px-1.5 py-0.5 rounded shadow-xs opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
-                            >
-                              Mettre 1er
-                            </button>
-                          )}
-
-                          {/* Delete button */}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveImage(idx)}
-                            className="absolute top-1.5 right-1.5 bg-red-600 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-xs z-10 cursor-pointer hover:bg-red-700"
-                            title="Supprimer la photo"
+                        return (
+                          <div
+                            key={idx}
+                            className="group flex flex-col rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-2xs transition-all hover:border-slate-300"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
+                            <div className="relative aspect-square w-full bg-slate-100 overflow-hidden">
+                              <Image
+                                src={url}
+                                alt={`Photo ${idx + 1}`}
+                                fill
+                                className="object-cover"
+                              />
+
+                              {/* Primary badge */}
+                              {idx === 0 ? (
+                                <span className="absolute top-1.5 left-1.5 bg-[#1B2A4A] text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-xs z-10">
+                                  ⭐ Principale
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetPrimaryImage(idx)}
+                                  className="absolute top-1.5 left-1.5 bg-black/60 hover:bg-black/80 text-white text-[9px] font-medium px-1.5 py-0.5 rounded shadow-xs opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+                                >
+                                  Mettre 1er
+                                </button>
+                              )}
+
+                              {/* Delete button */}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveImage(idx)}
+                                className="absolute top-1.5 right-1.5 bg-red-600 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-xs z-10 cursor-pointer hover:bg-red-700"
+                                title="Supprimer la photo"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            {/* Attribuer à la couleur Dropdown */}
+                            <div className="p-2 bg-slate-50/90 border-t border-slate-100 space-y-1">
+                              <label className="text-[10px] font-bold text-slate-600 block leading-tight">
+                                Attribuer à la couleur :
+                              </label>
+                              <select
+                                value={assignedColors[0]?.name || ''}
+                                onChange={(e) => handleAssignImageToColor(url, e.target.value)}
+                                className="w-full text-[11px] bg-white border border-slate-300 rounded-lg px-2 py-1 font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-sky-500"
+                              >
+                                <option value="">[Sélectionner...]</option>
+                                {colorList.map((c) => (
+                                  <option key={c.name} value={c.name}>
+                                    🎨 {c.name}
+                                  </option>
+                                ))}
+                              </select>
+
+                              {assignedColors.length > 0 && (
+                                <div className="flex items-center gap-1 pt-0.5 flex-wrap">
+                                  {assignedColors.map((ac) => (
+                                    <span
+                                      key={ac.name}
+                                      className="inline-flex items-center gap-1 text-[9px] font-semibold bg-sky-100 text-sky-800 px-1.5 py-0.5 rounded"
+                                    >
+                                      <span
+                                        className="w-1.5 h-1.5 rounded-full"
+                                        style={{ backgroundColor: ac.hex }}
+                                      />
+                                      <span className="truncate max-w-[90px]">{ac.name}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1122,7 +1746,7 @@ export default function AdminProductsPage() {
                             setUploadedImages((prev) => [...prev, preset.url]);
                           }
                         }}
-                        className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-lg border border-slate-200 transition-colors"
+                        className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-lg border border-slate-200 transition-colors cursor-pointer"
                       >
                         + {preset.name}
                       </button>

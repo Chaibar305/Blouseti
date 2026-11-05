@@ -10,6 +10,8 @@ export interface SiteSettings {
   email: string;
   address: string;
   topbar_text: string;
+  shipping_fee?: number;
+  free_shipping_threshold?: number;
   fb_pixel_id?: string;
   tiktok_pixel_id?: string;
   snapchat_pixel_id?: string;
@@ -17,6 +19,8 @@ export interface SiteSettings {
   cod_conversion_event?: 'Purchase' | 'Lead';
   custom_header_code?: string;
   custom_footer_code?: string;
+  instagram_url?: string;
+  facebook_url?: string;
   google_sheets_enabled?: boolean;
   google_sheets_id?: string;
   google_sheets_service_account?: string;
@@ -31,6 +35,10 @@ const DEFAULT_SETTINGS: SiteSettings = {
   email: 'contact@blouseti.shop',
   address: 'Boulevard Zerktouni, Casablanca, Maroc',
   topbar_text: 'Livraison Partout au Maroc en 24-48h • Paiement Cash à la Livraison • Échange de taille garanti',
+  shipping_fee: 35,
+  free_shipping_threshold: 450,
+  instagram_url: 'https://www.instagram.com/blouseti.shop/',
+  facebook_url: 'https://web.facebook.com/profile.php?id=61596347515075',
   fb_pixel_id: '',
   tiktok_pixel_id: '',
   snapchat_pixel_id: '',
@@ -67,6 +75,10 @@ export async function getSiteSettingsAction(): Promise<SiteSettings> {
       email: data.email || DEFAULT_SETTINGS.email,
       address: data.address || DEFAULT_SETTINGS.address,
       topbar_text: data.topbar_text || DEFAULT_SETTINGS.topbar_text,
+      shipping_fee: data.shipping_fee !== null && data.shipping_fee !== undefined ? Number(data.shipping_fee) : 35,
+      free_shipping_threshold: data.free_shipping_threshold !== null && data.free_shipping_threshold !== undefined ? Number(data.free_shipping_threshold) : 450,
+      instagram_url: data.instagram_url || DEFAULT_SETTINGS.instagram_url,
+      facebook_url: data.facebook_url || DEFAULT_SETTINGS.facebook_url,
       fb_pixel_id: data.fb_pixel_id || '',
       tiktok_pixel_id: data.tiktok_pixel_id || '',
       snapchat_pixel_id: data.snapchat_pixel_id || '',
@@ -143,6 +155,18 @@ export async function updateSiteSettingsAction(
     }
     if (newSettings.google_sheets_service_account !== undefined) {
       payload.google_sheets_service_account = newSettings.google_sheets_service_account.trim();
+    }
+    if (newSettings.shipping_fee !== undefined) {
+      payload.shipping_fee = Number(newSettings.shipping_fee);
+    }
+    if (newSettings.free_shipping_threshold !== undefined) {
+      payload.free_shipping_threshold = Number(newSettings.free_shipping_threshold);
+    }
+    if (newSettings.instagram_url !== undefined) {
+      payload.instagram_url = newSettings.instagram_url.trim();
+    }
+    if (newSettings.facebook_url !== undefined) {
+      payload.facebook_url = newSettings.facebook_url.trim();
     }
     if (newSettings.google_sheets_range !== undefined) {
       payload.google_sheets_range = newSettings.google_sheets_range.trim() || 'Sheet1!A:K';

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { CartItem, OrderData } from '@/types';
 import { SHIPPING_POLICY } from '@/data/morocco';
+import { useSettings } from '@/context/SettingsContext';
 
 interface CartContextType {
   items: CartItem[];
@@ -31,6 +32,7 @@ interface CartContextType {
   subtotal: number;
   embroideryTotal: number;
   shippingFee: number;
+  freeShippingThreshold: number;
   total: number;
 
   // Last completed order for /merci page
@@ -41,6 +43,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { settings } = useSettings();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [quickCheckoutItem, setQuickCheckoutItem] = useState<CartItem | null>(null);
@@ -148,12 +151,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const embroideryTotal = items.reduce(
     (acc, item) =>
-      acc + (item.embroidery?.enabled ? (item.embroidery.price || 20) * item.quantity : 0),
+      acc +
+      (item.embroidery?.enabled
+        ? (item.embroidery.price !== undefined
+            ? item.embroidery.price
+            : item.product.embroidery_price !== undefined
+            ? item.product.embroidery_price
+            : 45) * item.quantity
+        : 0),
     0
   );
 
+  const standardShippingFee = settings.shipping_fee !== undefined ? Number(settings.shipping_fee) : SHIPPING_POLICY.standardRate;
+  const freeShippingThreshold = settings.free_shipping_threshold !== undefined ? Number(settings.free_shipping_threshold) : SHIPPING_POLICY.freeShippingThreshold;
+
   const grossTotal = subtotal + embroideryTotal;
-  const shippingFee = grossTotal === 0 ? 0 : grossTotal >= SHIPPING_POLICY.freeShippingThreshold ? 0 : SHIPPING_POLICY.standardRate;
+  const shippingFee = grossTotal === 0 ? 0 : grossTotal >= freeShippingThreshold ? 0 : standardShippingFee;
   const total = grossTotal + shippingFee;
 
   return (
@@ -177,6 +190,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         subtotal,
         embroideryTotal,
         shippingFee,
+        freeShippingThreshold,
         total,
         lastOrder,
         setLastOrder,

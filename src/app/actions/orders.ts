@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 export interface CodOrderInput {
   orderNumber: string;
   customerName: string;
+  gender?: 'Femme' | 'Homme' | string;
   phone: string;
   city: string;
   address: string;
@@ -33,6 +34,7 @@ export interface DbOrder {
   id: string;
   order_number: string;
   customer_name: string;
+  gender?: 'Femme' | 'Homme' | string | null;
   phone: string;
   city: string;
   address: string;
@@ -71,6 +73,7 @@ export async function createCodOrderAction(data: CodOrderInput) {
     const orderPayload = {
       order_number: data.orderNumber,
       customer_name: data.customerName,
+      gender: data.gender || 'Femme',
       phone: data.phone,
       city: data.city,
       address: data.address,

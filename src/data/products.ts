@@ -67,11 +67,63 @@ export const PRODUCTS: Product[] = [
     badge: '❄️ Indispensable Bloc & Urgences',
     rating: 4.9,
     reviewCount: 78,
-    colors: [
-      { name: 'Bleu Marine Clinique', hex: '#1B2A4A', image: '/images/veste-polaire.jpg' },
-      { name: 'Noir Carbone', hex: '#1E293B', image: '/images/veste-polaire.jpg' },
+    images: [
+      '/images/polaire-bordeaux.jpg',
+      '/images/polaire-bleu-ciel.jpg',
+      '/images/polaire-bleu-marine.jpg',
+      '/images/polaire-bleu-roi.jpg'
     ],
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+    colors: [
+      {
+        name: 'Bordeaux Médical',
+        hex: '#6B111E',
+        image: '/images/polaire-bordeaux.jpg',
+        image_url: '/images/polaire-bordeaux.jpg',
+        sizes: [
+          { size: 'S', stock: 5, active: true },
+          { size: 'M', stock: 5, active: true },
+          { size: 'L', stock: 5, active: true },
+          { size: 'XL', stock: 5, active: true }
+        ]
+      },
+      {
+        name: 'Bleu Ciel Pastel',
+        hex: '#7CB2ED',
+        image: '/images/polaire-bleu-ciel.jpg',
+        image_url: '/images/polaire-bleu-ciel.jpg',
+        sizes: [
+          { size: 'S', stock: 5, active: true },
+          { size: 'M', stock: 5, active: true },
+          { size: 'L', stock: 5, active: true },
+          { size: 'XL', stock: 5, active: true }
+        ]
+      },
+      {
+        name: 'Bleu Marine Nuit',
+        hex: '#111D38',
+        image: '/images/polaire-bleu-marine.jpg',
+        image_url: '/images/polaire-bleu-marine.jpg',
+        sizes: [
+          { size: 'S', stock: 5, active: true },
+          { size: 'M', stock: 5, active: true },
+          { size: 'L', stock: 5, active: true },
+          { size: 'XL', stock: 5, active: true }
+        ]
+      },
+      {
+        name: 'Bleu Roi Vibrant',
+        hex: '#0B33A3',
+        image: '/images/polaire-bleu-roi.jpg',
+        image_url: '/images/polaire-bleu-roi.jpg',
+        sizes: [
+          { size: 'S', stock: 5, active: true },
+          { size: 'M', stock: 5, active: true },
+          { size: 'L', stock: 5, active: true },
+          { size: 'XL', stock: 5, active: true }
+        ]
+      },
+    ],
+    sizes: ['S', 'M', 'L', 'XL'],
     description: 'Protégez-vous de la climatisation des blocs opératoires et des nuits fraîches à l’hôpital grâce à cette veste micro-polaire respirante et légère.',
     features: [
       'Micro-polaire anti-boulochage 280g/m²',
@@ -160,6 +212,112 @@ export const PRODUCTS: Product[] = [
     ],
     fabric: 'Techno-stretch premium',
     fit: 'Coupe moderne'
+  },
+  {
+    id: 'pyjama-de-bloc-col-v-stretch',
+    slug: 'pyjama-de-bloc-col-v-stretch',
+    name: 'Pyjama de Bloc Col V Stretch',
+    subtitle: 'Ensemble Médical Complet : Haut Col V 3 poches + Pantalon Cargo Stretch + Bonnet assorti',
+    category: 'scrub',
+    price: 349,
+    originalPrice: 420,
+    badge: '⭐ Nouveauté Collection Bloc 2026',
+    rating: 4.9,
+    reviewCount: 64,
+    images: [
+      '/images/pyjama-col-v-vert-deau.jpg',
+      '/images/pyjama-col-v-bleu-marine.jpg',
+      '/images/pyjama-col-v-bordeaux.jpg',
+      '/images/pyjama-col-v-bleu-ciel.jpg',
+      '/images/pyjama-col-v-bleu-roi.jpg'
+    ],
+    colors: [
+      {
+        name: "Vert d'Eau Chirurgical",
+        hex: '#1FA888',
+        image: '/images/pyjama-col-v-vert-deau.jpg',
+        image_url: '/images/pyjama-col-v-vert-deau.jpg',
+        sizes: [
+          { size: 'XS', stock: 2, active: true },
+          { size: 'S', stock: 4, active: true },
+          { size: 'M', stock: 6, active: true },
+          { size: 'L', stock: 4, active: true },
+          { size: 'XL', stock: 3, active: true },
+          { size: 'XXL', stock: 1, active: true }
+        ]
+      },
+      {
+        name: 'Bleu Marine Médical',
+        hex: '#1B2A4A',
+        image: '/images/pyjama-col-v-bleu-marine.jpg',
+        image_url: '/images/pyjama-col-v-bleu-marine.jpg',
+        sizes: [
+          { size: 'XS', stock: 2, active: true },
+          { size: 'S', stock: 4, active: true },
+          { size: 'M', stock: 6, active: true },
+          { size: 'L', stock: 4, active: true },
+          { size: 'XL', stock: 3, active: true },
+          { size: 'XXL', stock: 1, active: true }
+        ]
+      },
+      {
+        name: 'Bordeaux Médical',
+        hex: '#6B1D2F',
+        image: '/images/pyjama-col-v-bordeaux.jpg',
+        image_url: '/images/pyjama-col-v-bordeaux.jpg',
+        sizes: [
+          { size: 'XS', stock: 2, active: true },
+          { size: 'S', stock: 4, active: true },
+          { size: 'M', stock: 6, active: true },
+          { size: 'L', stock: 4, active: true },
+          { size: 'XL', stock: 3, active: true },
+          { size: 'XXL', stock: 1, active: true }
+        ]
+      },
+      {
+        name: 'Bleu Ciel Pastel',
+        hex: '#93C5FD',
+        image: '/images/pyjama-col-v-bleu-ciel.jpg',
+        image_url: '/images/pyjama-col-v-bleu-ciel.jpg',
+        sizes: [
+          { size: 'XS', stock: 2, active: true },
+          { size: 'S', stock: 4, active: true },
+          { size: 'M', stock: 6, active: true },
+          { size: 'L', stock: 4, active: true },
+          { size: 'XL', stock: 3, active: true },
+          { size: 'XXL', stock: 1, active: true }
+        ]
+      },
+      {
+        name: 'Bleu Roi Médical',
+        hex: '#2563EB',
+        image: '/images/pyjama-col-v-bleu-roi.jpg',
+        image_url: '/images/pyjama-col-v-bleu-roi.jpg',
+        sizes: [
+          { size: 'XS', stock: 2, active: true },
+          { size: 'S', stock: 4, active: true },
+          { size: 'M', stock: 6, active: true },
+          { size: 'L', stock: 4, active: true },
+          { size: 'XL', stock: 3, active: true },
+          { size: 'XXL', stock: 1, active: true }
+        ]
+      }
+    ],
+    sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+    stock_quantity: 100,
+    description: 'Ensemble pyjama de bloc opératoire complet nouvelle génération en tissu 4-Way Stretch ultra-extensible, respirant et infroissable. Comprend le haut col V 3 poches, le pantalon cargo à cordon ajustable et le bonnet de bloc assorti.',
+    features: [
+      'Tissu technique 4-Way Stretch extensible 72% Polyester, 21% Rayonne, 7% Élasthanne',
+      'Haut Col V aéré avec 1 poche poitrine (fente stylo) et 2 poches basses profondes',
+      'Pantalon coupe droite moderne avec taille élastique et cordon de serrage blanc ajustable',
+      'Bonnet chirurgical assorti inclus pour une tenue de bloc complète et harmonieuse',
+      'Résistant aux lavages fréquents en milieu hospitalier jusqu’à 60°C sans décoloration',
+      'Broderie personnalisée disponible (Nom, Dr., Spécialité et Caducée)'
+    ],
+    fabric: 'Micro-fibre technique 4-Way Stretch respirante et déperlante',
+    fit: 'Coupe droite moderne confortable (Homme & Unisexe)',
+    is_active: true,
+    is_out_of_stock: false
   }
 ];
 
@@ -221,7 +379,7 @@ export const FAQS = [
   },
   {
     question: 'Comment fonctionne la personnalisation par broderie ?',
-    answer: 'Vous pouvez cocher l’option broderie (+20 DH seulement, ou offerte dans les Packs). Nous brodons au fil résistant de haute précision votre Titre et Nom complet (ex: "Dr. S. Bennani") et éventuellement votre spécialité sur la poche poitrine.'
+    answer: 'Vous pouvez cocher l’option broderie (+45 DH seulement, ou offerte dans les Packs). Nous brodons au fil résistant de haute précision votre Titre et Nom complet (ex: "Dr. S. Bennani") et éventuellement votre spécialité sur la poche poitrine.'
   },
   {
     question: 'Faites-vous des prix pour les cliniques, cabinets et commandes groupées ?',

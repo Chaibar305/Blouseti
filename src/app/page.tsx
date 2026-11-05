@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import TopBar from '@/components/TopBar';
 import Header from '@/components/Header';
@@ -10,8 +8,20 @@ import EmbroiderySection from '@/components/EmbroiderySection';
 import Testimonials from '@/components/Testimonials';
 import FaqSection from '@/components/FaqSection';
 import Footer from '@/components/Footer';
+import { getDbProductsAction } from '@/app/actions/products';
+import { getCategoriesAction } from '@/app/actions/categories';
+import { FALLBACK_CATEGORIES } from '@/data/categories';
 
-export default function HomePage() {
+export const instant = false;
+
+export default async function HomePage() {
+  const [productsRes, categoriesRes] = await Promise.all([
+    getDbProductsAction().catch(() => ({ success: false, products: [] })),
+    getCategoriesAction().catch(() => ({ success: false, categories: FALLBACK_CATEGORIES })),
+  ]);
+
+  const initialDbProducts = productsRes.success && productsRes.products ? productsRes.products : [];
+  const initialCategories = categoriesRes.success && categoriesRes.categories ? categoriesRes.categories : FALLBACK_CATEGORIES;
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -46,7 +56,10 @@ export default function HomePage() {
       <main className="flex-1">
         <Hero />
         <TrustBar />
-        <ProductList />
+        <ProductList
+          initialDbProducts={initialDbProducts}
+          initialCategories={initialCategories}
+        />
         <EmbroiderySection />
         <Testimonials />
         <FaqSection />

@@ -1,13 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Truck, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { usePathname } from 'next/navigation';
 
 export default function MobileBottomCta() {
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const { quickCheckoutItem, isCartOpen, openCart } = useCart();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   // Do not render on admin pages, product pages, or if quick checkout modal is already open
   if (pathname?.startsWith('/admin') || pathname?.startsWith('/products') || quickCheckoutItem || isCartOpen) {

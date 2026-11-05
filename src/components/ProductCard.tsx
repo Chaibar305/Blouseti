@@ -77,20 +77,40 @@ export default function ProductCard({ product }: ProductCardProps) {
     const list: string[] = [];
     if (product.images && product.images.length > 0) {
       product.images.forEach((img) => {
-        if (!list.includes(img)) list.push(img);
+        if (img && !list.includes(img)) list.push(img);
       });
     }
-    if (selectedColor?.image && !list.includes(selectedColor.image)) {
-      list.unshift(selectedColor.image);
-    }
-    product.colors.forEach((c) => {
-      if (c.image && !list.includes(c.image)) list.push(c.image);
+    product.colors?.forEach((c) => {
+      const img = c.image_url || c.image;
+      if (img && !list.includes(img)) list.push(img);
     });
     return list.length > 0 ? list : ['/images/scrub-navy.jpg'];
-  }, [product, selectedColor]);
+  }, [product]);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
+  const handleColorClick = (color: ProductColor) => {
+    setSelectedColor(color);
+    const targetImg = color.image_url || color.image;
+    if (targetImg) {
+      const idx = productImages.findIndex((img) => img === targetImg);
+      if (idx !== -1) {
+        setActiveImageIndex(idx);
+      }
+    }
+  };
+
+  const handleDotClick = (i: number) => {
+    setActiveImageIndex(i);
+    const img = productImages[i];
+    if (img && product.colors) {
+      const match = product.colors.find(
+        (c) => (c.image_url && c.image_url === img) || (c.image && c.image === img)
+      );
+      if (match) setSelectedColor(match);
+    }
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStartX(e.touches[0].clientX);
@@ -104,10 +124,12 @@ export default function ProductCard({ product }: ProductCardProps) {
     if (Math.abs(diff) > 35) {
       if (diff > 0) {
         // swipe left -> next
-        setActiveImageIndex((prev) => (prev + 1) % productImages.length);
+        const nextIdx = (activeImageIndex + 1) % productImages.length;
+        handleDotClick(nextIdx);
       } else {
         // swipe right -> prev
-        setActiveImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length);
+        const prevIdx = (activeImageIndex - 1 + productImages.length) % productImages.length;
+        handleDotClick(prevIdx);
       }
     }
     setTouchStartX(null);
@@ -192,7 +214,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         onTouchEnd={handleTouchEnd}
       >
         <Image
-          src={productImages[activeImageIndex] || selectedColor.image || product.colors[0].image}
+          src={productImages[activeImageIndex] || selectedColor.image_url || selectedColor.image || product.colors[0]?.image || '/images/scrub-navy.jpg'}
           alt={`${product.name} - ${selectedColor.name}`}
           fill
           className={`object-cover object-center transition-transform duration-500 ease-out ${
@@ -223,7 +245,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setActiveImageIndex(i);
+                  handleDotClick(i);
                 }}
                 className={`w-1.5 h-1.5 rounded-full transition-all ${
                   activeImageIndex === i ? 'bg-white w-3' : 'bg-white/50'
@@ -283,7 +305,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                   <button
                     key={color.name}
                     type="button"
-                    onClick={() => setSelectedColor(color)}
+                    onClick={() => handleColorClick(color)}
                     aria-label={color.name}
                     className={`w-7 h-7 rounded-full transition-all relative flex items-center justify-center cursor-pointer ${
                       isSelected

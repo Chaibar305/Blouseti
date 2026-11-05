@@ -110,7 +110,9 @@ export function formatOrderToSheetRow(order: any): (string | number)[] {
     : new Date().toLocaleDateString('fr-MA');
 
   const orderNum = order.order_number || order.orderNumber || 'BLS-CMD';
-  const customerName = order.customer_name || order.customerName || 'Client';
+  const rawCustomerName = order.customer_name || order.customerName || 'Client';
+  const genderTag = order.gender ? ` (${order.gender})` : '';
+  const customerName = `${rawCustomerName}${genderTag}`;
   const phone = order.phone || '';
   const city = order.city || '';
   const address = order.address || '';

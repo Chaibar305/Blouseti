@@ -41,7 +41,7 @@ export default function EmbroiderySection() {
         speciality: speciality || 'Médecin',
         font: selectedFont,
         color: selectedColor === 'Fil Blanc' ? 'Blanc Pur' : selectedColor === 'Fil Argenté' ? 'Argenté Reflet' : selectedColor === 'Fil Doré' ? 'Doré' : 'Bleu Ciel',
-        price: 20
+        price: 45
       }
     });
   };
@@ -58,7 +58,7 @@ export default function EmbroiderySection() {
             <span>Option Atelier de Broderie Haute Précision</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
-            Faites Broder Votre Nom & Spécialité (+20 DH)
+            Faites Broder Votre Nom & Spécialité (+45 DH)
           </h2>
           <p className="mt-3 text-slate-300 text-sm sm:text-base leading-relaxed">
             Valorisez votre statut professionnel avec une broderie indélébile réalisée dans nos ateliers à Casablanca. Résiste à tous les cycles de lavage et de désinfection hospitalière.
@@ -72,7 +72,7 @@ export default function EmbroiderySection() {
             <h3 className="text-base font-bold text-white flex items-center justify-between border-b border-white/10 pb-3">
               <span>Personnaliser en direct votre tenue</span>
               <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-500/30">
-                +20 DH seulement
+                +45 DH seulement
               </span>
             </h3>
 

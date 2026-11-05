@@ -1,0 +1,58 @@
+import { Category } from '@/types';
+
+export const FALLBACK_CATEGORIES: Category[] = [
+  {
+    id: 'cat-scrub',
+    name: 'Scrubs Médicaux',
+    slug: 'scrub',
+    icon: '🩺',
+    description: 'Tenues médicales ergonomiques 4-Way Stretch respirantes',
+    display_order: 1,
+    is_active: true,
+  },
+  {
+    id: 'cat-blouse',
+    name: 'Blouses Blanches',
+    slug: 'blouse',
+    icon: '🥼',
+    description: 'Blouses blanches prestige pour médecins, dentistes et praticiens',
+    display_order: 2,
+    is_active: true,
+  },
+  {
+    id: 'cat-polaire',
+    name: 'Vestes Polaires',
+    slug: 'polaire',
+    icon: '🧥',
+    description: 'Vestes thermiques pour bloc opératoire et gardes de nuit',
+    display_order: 3,
+    is_active: true,
+  },
+  {
+    id: 'cat-cuisine',
+    name: 'Vestes de Cuisine & Chefs',
+    slug: 'cuisine',
+    icon: '👨‍🍳',
+    description: 'Vestes respirantes, tabliers et tenues de chefs cuisiniers',
+    display_order: 4,
+    is_active: true,
+  },
+  {
+    id: 'cat-hotellerie',
+    name: 'Personnel Hôtelier & Service',
+    slug: 'hotellerie',
+    icon: '🛎️',
+    description: 'Tenues professionnelles de réception, service et hôtellerie',
+    display_order: 5,
+    is_active: true,
+  },
+  {
+    id: 'cat-pack',
+    name: 'Packs Économiques',
+    slug: 'pack',
+    icon: '🎁',
+    description: 'Packs duo avantageux avec broderie personnalisée',
+    display_order: 6,
+    is_active: true,
+  },
+];

@@ -33,7 +33,7 @@ export const MOROCCAN_CITIES = [
 
 export const SHIPPING_POLICY = {
   freeShippingThreshold: 450, // Livraison gratuite au Maroc dès 450 DH
-  standardRate: 29, // 29 DH pour les commandes inférieures
+  standardRate: 35, // 35 DH par défaut (configurable en direct dans /admin/settings)
   estimatedDelivery: '24h à 48h ouvrables',
   returnWindow: '48 heures après réception pour échange de taille',
   supportPhone: '+212 660-889900',
