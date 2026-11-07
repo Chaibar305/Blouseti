@@ -68,6 +68,11 @@ export const metadata: Metadata = {
     icon: '/logo.png',
     apple: '/logo.png',
   },
+  verification: {
+    other: {
+      'facebook-domain-verification': 'xjf2x4zsn3j2sjo5g6a7n01pambqwg',
+    },
+  },
 };
 
 export const viewport: Viewport = {
@@ -87,6 +92,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className={`${inter.variable} scroll-smooth`}>
+      <head>
+        <meta name="facebook-domain-verification" content="xjf2x4zsn3j2sjo5g6a7n01pambqwg" />
+      </head>
       <body className="min-h-screen flex flex-col font-sans bg-[#F8FAFC] text-slate-800 antialiased selection:bg-sky-500 selection:text-white">
         <SettingsProvider>
           {/* Dynamic Pixels & Custom Scripts */}
