@@ -29,6 +29,7 @@ import { OrderData } from '@/types';
 import { createCodOrderAction } from '@/app/actions/orders';
 import { useSettings } from '@/context/SettingsContext';
 import { trackCodOrderConversion } from '@/lib/pixelTracking';
+import { trackBoth } from '@/lib/meta';
 import { validateCoupon } from '@/app/actions/coupons';
 
 // Validation Schema for Moroccan COD orders
@@ -87,6 +88,7 @@ export default function CodCheckoutModal() {
   const [embroiderySpeciality, setEmbroiderySpeciality] = useState(
     quickCheckoutItem?.embroidery?.speciality || ''
   );
+  const hasTrackedInitiateCheckout = React.useRef(false);
 
   // Reset or update local state when quickCheckoutItem changes
   useEffect(() => {
@@ -100,6 +102,25 @@ export default function CodCheckoutModal() {
       setAppliedCoupon(null);
       setCouponInput('');
       setCouponError(null);
+
+      // Déclencher InitiateCheckout avec déduplication CAPI
+      if (!hasTrackedInitiateCheckout.current) {
+        hasTrackedInitiateCheckout.current = true;
+        const initialValue =
+          (quickCheckoutItem.product.price + (quickCheckoutItem.embroidery?.price || 0)) *
+          (quickCheckoutItem.quantity || 1);
+
+        trackBoth('InitiateCheckout', {
+          content_ids: [quickCheckoutItem.product.id],
+          content_name: quickCheckoutItem.product.name,
+          content_type: 'product',
+          value: initialValue,
+          currency: 'MAD',
+          num_items: quickCheckoutItem.quantity || 1,
+        });
+      }
+    } else {
+      hasTrackedInitiateCheckout.current = false;
     }
   }, [quickCheckoutItem]);
 
@@ -240,7 +261,7 @@ export default function CodCheckoutModal() {
 
       setLastOrder(completeOrder);
 
-      await createCodOrderAction({
+      const orderRes = await createCodOrderAction({
         orderNumber: orderId,
         customerName: data.fullName,
         gender: data.gender,
@@ -267,6 +288,57 @@ export default function CodCheckoutModal() {
         notes: data.notes,
       });
 
+      if (!orderRes || !orderRes.success) {
+        throw new Error(orderRes?.error || 'Erreur lors de l\'enregistrement de votre commande. Veuillez réessayer.');
+      }
+
+      // Hachage et préparation des données utilisateur pour Meta CAPI & Pixel
+      const nameParts = data.fullName.trim().split(/\s+/);
+      const firstName = nameParts[0] || data.fullName;
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined;
+
+      const metaUserData = {
+        phone: data.phone,
+        firstName,
+        lastName,
+        city: data.city,
+        gender: data.gender,
+      };
+
+      // 1. Envoyer Purchase UNE SEULE FOIS (dédupliqué Pixel navigateur + CAPI serveur par event_id)
+      await trackBoth(
+        'Purchase',
+        {
+          value: total,
+          currency: 'MAD',
+          content_ids: [orderItem.product.id],
+          content_type: 'product',
+          contents: [
+            {
+              id: orderItem.product.id,
+              quantity: orderItem.quantity,
+              item_price: orderItem.product.price,
+            },
+          ],
+          num_items: orderItem.quantity,
+          order_id: orderId,
+        },
+        metaUserData
+      );
+
+      // 2. Envoyer aussi Lead avec les mêmes données
+      await trackBoth(
+        'Lead',
+        {
+          value: total,
+          currency: 'MAD',
+          content_name: 'Commande Blouseti COD',
+          order_id: orderId,
+        },
+        metaUserData
+      );
+
+      // 3. Suivi pour TikTok, Snapchat et Google Analytics
       trackCodOrderConversion({
         orderId,
         totalAmount: total,
@@ -286,8 +358,11 @@ export default function CodCheckoutModal() {
 
       closeQuickCheckout();
       router.push(`/merci?orderId=${orderId}`);
-    } catch (err) {
-      console.error('Order error:', err);
+    } catch (err: any) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Order error:', err);
+      }
+      alert(err.message || 'Une erreur est survenue lors de la commande.');
     } finally {
       setIsSubmitting(false);
     }

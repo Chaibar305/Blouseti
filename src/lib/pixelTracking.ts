@@ -43,7 +43,6 @@ export function trackCodOrderConversion(payload: CodOrderTrackingPayload) {
   // Vérifier si cette commande a déjà été trackée dans la session
   try {
     if (sessionStorage.getItem(storageKey)) {
-      console.log(`[Pixel Tracking] Commande ${orderId} déjà comptabilisée, tracking ignoré.`);
       return;
     }
     sessionStorage.setItem(storageKey, 'true');
@@ -53,42 +52,9 @@ export function trackCodOrderConversion(payload: CodOrderTrackingPayload) {
 
   const totalQuantity = items.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
-  // 1. Meta / Facebook Pixel
-  if (typeof window.fbq === 'function') {
-    try {
-      if (conversionEvent === 'Purchase') {
-        window.fbq('track', 'Purchase', {
-          content_type: 'product',
-          content_name: 'Commande Blouseti COD',
-          contents: items.map((item) => ({
-            id: String(item.id),
-            quantity: item.quantity,
-            item_price: item.price,
-          })),
-          content_ids: items.map((item) => String(item.id)),
-          value: totalAmount,
-          currency: 'MAD',
-          num_items: totalQuantity,
-          city: city,
-          order_id: orderId,
-        });
-        console.log(`[Meta Pixel] ✓ fbq('track', 'Purchase') envoyé pour #${orderId} (${totalAmount} MAD)`);
-      } else {
-        window.fbq('track', 'Lead', {
-          content_name: 'Commande Blouseti COD',
-          value: totalAmount,
-          currency: 'MAD',
-          city: city,
-          order_id: orderId,
-        });
-        console.log(`[Meta Pixel] ✓ fbq('track', 'Lead') envoyé pour #${orderId}`);
-      }
-    } catch (err) {
-      console.warn('[Meta Pixel] Erreur de tracking:', err);
-    }
-  }
+  // Note: Meta / Facebook Pixel & CAPI sont gérés directement avec déduplication event_id via @/lib/meta
 
-  // 2. TikTok Pixel
+  // 1. TikTok Pixel
   if (typeof window.ttq?.track === 'function') {
     try {
       if (conversionEvent === 'Purchase') {
@@ -104,21 +70,19 @@ export function trackCodOrderConversion(payload: CodOrderTrackingPayload) {
           value: totalAmount,
           currency: 'MAD',
         });
-        console.log(`[TikTok Pixel] ✓ ttq.track('CompletePayment') envoyé pour #${orderId}`);
       } else {
         window.ttq.track('SubmitForm', {
           value: totalAmount,
           currency: 'MAD',
           order_id: orderId,
         });
-        console.log(`[TikTok Pixel] ✓ ttq.track('SubmitForm') envoyé pour #${orderId}`);
       }
-    } catch (err) {
-      console.warn('[TikTok Pixel] Erreur de tracking:', err);
+    } catch {
+      // Ignorer en silence
     }
   }
 
-  // 3. Snapchat Pixel
+  // 2. Snapchat Pixel
   if (typeof window.snaptr === 'function') {
     try {
       if (conversionEvent === 'Purchase') {
@@ -129,21 +93,19 @@ export function trackCodOrderConversion(payload: CodOrderTrackingPayload) {
           number_items: totalQuantity,
           transaction_id: orderId,
         });
-        console.log(`[Snapchat Pixel] ✓ snaptr('track', 'PURCHASE') envoyé pour #${orderId}`);
       } else {
         window.snaptr('track', 'SIGN_UP', {
           currency: 'MAD',
           price: totalAmount,
           transaction_id: orderId,
         });
-        console.log(`[Snapchat Pixel] ✓ snaptr('track', 'SIGN_UP') envoyé pour #${orderId}`);
       }
-    } catch (err) {
-      console.warn('[Snapchat Pixel] Erreur de tracking:', err);
+    } catch {
+      // Ignorer en silence
     }
   }
 
-  // 4. Google Analytics (GA4)
+  // 3. Google Analytics (GA4)
   if (typeof window.gtag === 'function') {
     try {
       const gaEvent = conversionEvent === 'Purchase' ? 'purchase' : 'generate_lead';
@@ -159,9 +121,8 @@ export function trackCodOrderConversion(payload: CodOrderTrackingPayload) {
           item_variant: [item.color, item.size].filter(Boolean).join(' / '),
         })),
       });
-      console.log(`[Google Analytics] ✓ gtag('event', '${gaEvent}') envoyé pour #${orderId}`);
-    } catch (err) {
-      console.warn('[Google Analytics] Erreur de tracking:', err);
+    } catch {
+      // Ignorer en silence
     }
   }
 }

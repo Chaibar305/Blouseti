@@ -83,6 +83,7 @@ export const viewport: Viewport = {
 };
 
 import { Suspense } from 'react';
+import Script from 'next/script';
 import PixelScripts from '@/components/PixelScripts';
 
 export default function RootLayout({
@@ -96,6 +97,34 @@ export default function RootLayout({
         <meta name="facebook-domain-verification" content="xjf2x4zsn3j2sjo5g6a7n01pambqwg" />
       </head>
       <body className="min-h-screen flex flex-col font-sans bg-[#F8FAFC] text-slate-800 antialiased selection:bg-sky-500 selection:text-white">
+        {/* Meta Pixel Officiel Blouseti (1150720077648867) */}
+        <Script
+          id="meta-pixel"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              'https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init', '${process.env.NEXT_PUBLIC_META_PIXEL_ID || '1150720077648867'}');
+              fbq('track', 'PageView');
+            `,
+          }}
+        />
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: 'none' }}
+            src={`https://www.facebook.com/tr?id=${process.env.NEXT_PUBLIC_META_PIXEL_ID || '1150720077648867'}&ev=PageView&noscript=1`}
+            alt="Meta Pixel"
+          />
+        </noscript>
         <SettingsProvider>
           {/* Dynamic Pixels & Custom Scripts */}
           <PixelScripts />

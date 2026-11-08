@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Star, ShoppingBag, Zap, Ruler, Sparkles, Check } from 'lucide-react';
 import { Product, ProductColor } from '@/types';
 import { useCart } from '@/context/CartContext';
+import { trackBoth } from '@/lib/meta';
 
 interface ProductCardProps {
   product: Product;
@@ -40,6 +41,16 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   // Add to cart
   const handleAddToCart = () => {
+    // Track AddToCart avec CAPI & Pixel
+    trackBoth('AddToCart', {
+      content_ids: [product.id],
+      content_name: product.name,
+      content_type: 'product',
+      value: product.price,
+      currency: 'MAD',
+      num_items: 1,
+    });
+
     addToCart({
       id: `${product.id}-${selectedColor.name}-${selectedSize}`,
       product,

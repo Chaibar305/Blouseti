@@ -75,41 +75,7 @@ export default function PixelScripts({ settings: propsSettings }: PixelScriptsPr
 
   return (
     <>
-      {/* ========================================================= */}
-      {/* 1. META / FACEBOOK PIXEL                                   */}
-      {/* ========================================================= */}
-      {fb_pixel_id && fb_pixel_id.trim() && (
-        <>
-          <Script
-            id="meta-pixel"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{
-              __html: `
-                !function(f,b,e,v,n,t,s)
-                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-                n.queue=[];t=b.createElement(e);t.async=!0;
-                t.src=v;s=b.getElementsByTagName(e)[0];
-                s.parentNode.insertBefore(t,s)}(window, document,'script',
-                'https://connect.facebook.net/en_US/fbevents.js');
-                fbq('init', '${fb_pixel_id.trim()}');
-                fbq('track', 'PageView');
-              `,
-            }}
-          />
-          <noscript>
-            <img
-              height="1"
-              width="1"
-              style={{ display: 'none' }}
-              src={`https://www.facebook.com/tr?id=${fb_pixel_id.trim()}&ev=PageView&noscript=1`}
-              alt="Meta Pixel"
-            />
-          </noscript>
-        </>
-      )}
-
+      {/* Note: Meta Pixel officiel est géré centralement dans app/layout.tsx avec déduplication CAPI */}
       {/* ========================================================= */}
       {/* 2. TIKTOK PIXEL                                           */}
       {/* ========================================================= */}

@@ -27,6 +27,7 @@ import {
 import { Product, ProductColor } from '@/types';
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/ProductCard';
+import { trackBoth } from '@/lib/meta';
 
 interface ProductDetailViewProps {
   product: Product;
@@ -138,6 +139,17 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
     }
   };
 
+  // Track ViewContent on product page load
+  React.useEffect(() => {
+    trackBoth('ViewContent', {
+      content_ids: [product.id],
+      content_name: product.name,
+      content_type: 'product',
+      value: product.price,
+      currency: 'MAD',
+    });
+  }, [product.id, product.name, product.price]);
+
   // Ensure initial size is valid on mount
   React.useEffect(() => {
     const initialSizes = selectedColor?.sizes?.filter((s) => s.active !== false);
@@ -213,6 +225,17 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
 
   const handleAddToCart = () => {
     if (isVariantOutOfStock) return;
+
+    // Track AddToCart avec CAPI & Pixel
+    trackBoth('AddToCart', {
+      content_ids: [product.id],
+      content_name: product.name,
+      content_type: 'product',
+      value: effectiveUnitPrice * quantity,
+      currency: 'MAD',
+      num_items: quantity,
+    });
+
     addToCart({
       id: `${product.id}-${selectedColor.name}-${selectedSize}`,
       product,

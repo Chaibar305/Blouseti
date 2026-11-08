@@ -8,7 +8,6 @@ import confetti from 'canvas-confetti';
 import { CheckCircle2, Truck, MessageCircle, MapPin, Phone, User, Calendar, ShieldCheck, ArrowLeft, Sparkles, Printer } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
-import { trackCodOrderConversion } from '@/lib/pixelTracking';
 import { SHIPPING_POLICY } from '@/data/morocco';
 import TopBar from '@/components/TopBar';
 import Header from '@/components/Header';
@@ -30,28 +29,10 @@ function OrderConfirmationContent() {
         spread: 70,
         origin: { y: 0.6 }
       });
-    } catch (e) {
-      console.log('Confetti not available:', e);
+    } catch {
+      // Ignorer
     }
-
-    // Suivi de conversion COD sécurisé pour pixels
-    if (lastOrder) {
-      trackCodOrderConversion({
-        orderId: lastOrder.orderId,
-        totalAmount: lastOrder.total,
-        city: lastOrder.customer?.city || 'Maroc',
-        items: lastOrder.items.map((i) => ({
-          id: i.product.id,
-          name: i.product.name,
-          price: i.product.price,
-          quantity: i.quantity,
-          size: i.selectedSize,
-          color: i.selectedColor?.name,
-        })),
-        conversionEvent: settings.cod_conversion_event || 'Purchase',
-      });
-    }
-  }, [lastOrder, settings.cod_conversion_event]);
+  }, []);
 
   const order = lastOrder;
   const displayOrderId = orderIdParam || order?.orderId || 'BLS-2026-8492';
