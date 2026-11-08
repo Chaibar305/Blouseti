@@ -318,6 +318,127 @@ export const PRODUCTS: Product[] = [
     fit: 'Coupe droite moderne confortable (Homme & Unisexe)',
     is_active: true,
     is_out_of_stock: false
+  },
+  {
+    id: 'scrub-medical-manches-3-4-hijab-edition',
+    slug: 'scrub-medical-manches-3-4-hijab-edition',
+    name: 'Scrub Médical Manches 3/4 - Classic & Hijab Edition',
+    subtitle: 'Ensemble Médical Premium : Haut Col V Manches 3/4 + Pantalon Droit Stretch',
+    category: 'scrub',
+    price: 260,
+    originalPrice: 349,
+    badge: '✨ Nouveauté Collection 2026',
+    rating: 4.9,
+    reviewCount: 87,
+    images: [
+      '/images/scrub-classic-black.jpg',
+      '/images/scrub-hijab-bordeaux.jpg',
+      '/images/scrub-hijab-bleu-marine-ton.jpg',
+      '/images/scrub-classic-mauve.jpg',
+      '/images/scrub-hijab-bleu-marine-beige.jpg',
+      '/images/scrub-hijab-noir.jpg'
+    ],
+    colors: [
+      {
+        name: 'Classic Black',
+        hex: '#1E1E22',
+        image: '/images/scrub-classic-black.jpg',
+        image_url: '/images/scrub-classic-black.jpg',
+        sizes: [
+          { size: 'XS', stock: 20, active: true },
+          { size: 'S', stock: 20, active: true },
+          { size: 'M', stock: 20, active: true },
+          { size: 'L', stock: 20, active: true },
+          { size: 'XL', stock: 20, active: true },
+          { size: 'XXL', stock: 20, active: true }
+        ]
+      },
+      {
+        name: 'Classic Bordo',
+        hex: '#581825',
+        image: '/images/scrub-hijab-bordeaux.jpg',
+        image_url: '/images/scrub-hijab-bordeaux.jpg',
+        sizes: [
+          { size: 'XS', stock: 20, active: true },
+          { size: 'S', stock: 20, active: true },
+          { size: 'M', stock: 20, active: true },
+          { size: 'L', stock: 20, active: true },
+          { size: 'XL', stock: 20, active: true },
+          { size: 'XXL', stock: 20, active: true }
+        ]
+      },
+      {
+        name: 'Bleu Marine (Hijab 2.0)',
+        hex: '#14223B',
+        image: '/images/scrub-hijab-bleu-marine-ton.jpg',
+        image_url: '/images/scrub-hijab-bleu-marine-ton.jpg',
+        sizes: [
+          { size: 'XS', stock: 20, active: true },
+          { size: 'S', stock: 20, active: true },
+          { size: 'M', stock: 20, active: true },
+          { size: 'L', stock: 20, active: true },
+          { size: 'XL', stock: 20, active: true },
+          { size: 'XXL', stock: 20, active: true }
+        ]
+      },
+      {
+        name: 'Mauve Médical',
+        hex: '#522A4E',
+        image: '/images/scrub-classic-mauve.jpg',
+        image_url: '/images/scrub-classic-mauve.jpg',
+        sizes: [
+          { size: 'XS', stock: 20, active: true },
+          { size: 'S', stock: 20, active: true },
+          { size: 'M', stock: 20, active: true },
+          { size: 'L', stock: 20, active: true },
+          { size: 'XL', stock: 20, active: true },
+          { size: 'XXL', stock: 20, active: true }
+        ]
+      },
+      {
+        name: 'Bleu Marine (Hijab Beige)',
+        hex: '#1B2A4A',
+        image: '/images/scrub-hijab-bleu-marine-beige.jpg',
+        image_url: '/images/scrub-hijab-bleu-marine-beige.jpg',
+        sizes: [
+          { size: 'XS', stock: 20, active: true },
+          { size: 'S', stock: 20, active: true },
+          { size: 'M', stock: 20, active: true },
+          { size: 'L', stock: 20, active: true },
+          { size: 'XL', stock: 20, active: true },
+          { size: 'XXL', stock: 20, active: true }
+        ]
+      },
+      {
+        name: 'Noir Carbone (Hijab Edition)',
+        hex: '#2A1B24',
+        image: '/images/scrub-hijab-noir.jpg',
+        image_url: '/images/scrub-hijab-noir.jpg',
+        sizes: [
+          { size: 'XS', stock: 20, active: true },
+          { size: 'S', stock: 20, active: true },
+          { size: 'M', stock: 20, active: true },
+          { size: 'L', stock: 20, active: true },
+          { size: 'XL', stock: 20, active: true },
+          { size: 'XXL', stock: 20, active: true }
+        ]
+      }
+    ],
+    sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+    stock_quantity: 720,
+    description: "Ensemble médical féminin manches 3/4 haut de gamme alliant élégance, pudeur et praticité. Confectionné dans un tissu 4-Way Stretch ultra-doux, respirant et infroissable, idéal pour le milieu hospitalier, les cliniques et cabinets au Maroc.",
+    features: [
+      'Tissu technique 4-Way Stretch extensible 72% Polyester, 21% Rayonne, 7% Élasthanne',
+      'Manches 3/4 élégantes spécialement conçues pour respecter l\'asepsie et l\'aisance des mouvements',
+      'Haut Col V avec 1 poche poitrine et 2 poches basses profondes renforcées',
+      'Pantalon coupe droite moderne avec taille élastique confort et cordon ajustable',
+      'Tissu respirant, infroissable et grand teint résistant aux lavages fréquents à 60°C',
+      'Option broderie personnalisée disponible (Dr., Nom complet & Spécialité)'
+    ],
+    fabric: 'Micro-fibre technique 4-Way Stretch ultra-extensible et respirante',
+    fit: 'Coupe féminine moderne manches 3/4 (Hijab & Classic Friendly)',
+    is_active: true,
+    is_out_of_stock: false
   }
 ];
 
