@@ -2,10 +2,12 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Star, CheckCircle, Quote, ThumbsUp } from 'lucide-react';
+import { Star, CheckCircle } from 'lucide-react';
 import { TESTIMONIALS } from '@/data/products';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Testimonials() {
+  const { t: tr } = useLanguage();
   return (
     <section className="py-16 bg-white border-b border-slate-200/80 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,13 +16,13 @@ export default function Testimonials() {
         <div className="text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-full mb-3">
             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span>Avis Vérifiés Soignants du Maroc</span>
+            <span>{tr('test_badge')}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#1B2A4A] tracking-tight">
-            Ils Portent Blouseti au Quotidien
+            {tr('test_title')}
           </h2>
           <p className="mt-2 text-sm sm:text-base text-slate-600">
-            Médecins spécialistes, chirurgiens-dentistes, infirmiers et internes en médecine partagent leur avis sur la qualité de nos scrubs et blouses.
+            {tr('test_subtitle')}
           </p>
         </div>
 
@@ -41,7 +43,7 @@ export default function Testimonials() {
                   </div>
                   <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                     <CheckCircle className="w-3 h-3 text-emerald-600" />
-                    Avis Vérifié
+                    {tr('test_verified')}
                   </span>
                 </div>
 
@@ -52,7 +54,7 @@ export default function Testimonials() {
 
                 {/* Purchased product tag */}
                 <div className="text-[11px] font-medium text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-slate-200/60 inline-block">
-                  Acheté : <span className="text-[#1B2A4A] font-semibold">{t.itemBought}</span>
+                  {tr('test_bought')} <span className="text-[#1B2A4A] font-semibold">{t.itemBought}</span>
                 </div>
               </div>
 
@@ -89,23 +91,23 @@ export default function Testimonials() {
                   <Star key={i} className="w-4 h-4 fill-amber-400" />
                 ))}
               </div>
-              <p className="text-sm font-bold text-white">Score de satisfaction globale au Maroc</p>
-              <p className="text-xs text-slate-400">Basé sur plus de 1 200 retours clients soignants en 2025-2026</p>
+              <p className="text-sm font-bold text-white">{tr('test_stats_title')}</p>
+              <p className="text-xs text-slate-400">{tr('test_stats_sub')}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4 text-xs font-semibold text-slate-300">
-            <div className="text-center px-3 border-r border-white/10">
+            <div className="text-center px-3 border-e border-white/10">
               <span className="block text-xl font-bold text-white">99.2%</span>
-              <span>Tissus validés 60°C</span>
+              <span>{tr('test_stat_1')}</span>
             </div>
-            <div className="text-center px-3 border-r border-white/10">
+            <div className="text-center px-3 border-e border-white/10">
               <span className="block text-xl font-bold text-emerald-400">&lt; 48h</span>
-              <span>Livraison moyenne</span>
+              <span>{tr('test_stat_2')}</span>
             </div>
             <div className="text-center px-3">
               <span className="block text-xl font-bold text-sky-400">100%</span>
-              <span>Paiement à réception</span>
+              <span>{tr('test_stat_3')}</span>
             </div>
           </div>
         </div>

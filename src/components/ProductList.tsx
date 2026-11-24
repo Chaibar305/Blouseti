@@ -9,6 +9,8 @@ import { FALLBACK_CATEGORIES } from '@/data/categories';
 import { mapDbProductToProduct, filterActiveProducts, normalizeCategory } from '@/lib/products-helper';
 import ProductCard from './ProductCard';
 import { Sparkles, CheckCircle2, ChefHat, UtensilsCrossed, Stethoscope } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
+import { getLocalizedCategoryLabel } from '@/lib/i18n';
 
 interface ProductListProps {
   initialDbProducts?: DbProduct[];
@@ -19,6 +21,7 @@ export default function ProductList({
   initialDbProducts,
   initialCategories,
 }: ProductListProps) {
+  const { lang, t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState<ProductCategory>('all');
   const [dbCategories, setDbCategories] = useState<Category[]>(() => {
     if (initialCategories && initialCategories.length > 0) {
@@ -78,7 +81,7 @@ export default function ProductList({
   // List of active categories from Supabase that are active or have products
   const displayCategories = useMemo(() => {
     const list: { id: string; label: string; icon?: string; count: number }[] = [
-      { id: 'all', label: 'Toutes les Tenues', icon: '✨', count: products.length },
+      { id: 'all', label: t('catalog_all_tab'), icon: '✨', count: products.length },
     ];
 
     dbCategories.forEach((cat) => {
@@ -93,7 +96,7 @@ export default function ProductList({
       if (cat.is_active || count > 0) {
         list.push({
           id: cat.slug,
-          label: cat.name,
+          label: getLocalizedCategoryLabel(cat.slug, cat.name, lang),
           icon: cat.icon,
           count,
         });
@@ -101,7 +104,7 @@ export default function ProductList({
     });
 
     return list;
-  }, [dbCategories, products]);
+  }, [dbCategories, products, lang, t]);
 
   // Handle URL hash navigation (e.g. #cuisine, #hotellerie, #scrub, #blouse, #catalogue)
   useEffect(() => {
@@ -163,13 +166,13 @@ export default function ProductList({
         <div className="text-center max-w-3xl mx-auto mb-10">
           <div className="inline-flex items-center gap-2 bg-sky-100/80 text-sky-800 px-3.5 py-1.5 rounded-full text-xs font-bold mb-3">
             <Sparkles className="w-3.5 h-3.5 text-sky-600" />
-            <span>Catalogue Officiel Blouseti.shop</span>
+            <span>{t('catalog_badge')}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#1B2A4A] tracking-tight">
-            Tenues Professionnelles Médicales, Cuisine &amp; Hôtellerie
+            {t('catalog_title')}
           </h2>
           <p className="mt-2 text-sm sm:text-base text-slate-600">
-            Choisissez votre modèle, sélectionnez votre taille et votre couleur. Commandez en 1 clic sans payer d’avance (Paiement à la livraison partout au Maroc).
+            {t('catalog_subtitle')}
           </p>
         </div>
 

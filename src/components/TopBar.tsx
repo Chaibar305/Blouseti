@@ -3,11 +3,13 @@
 import React from 'react';
 import { Phone, Megaphone } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { trackEvent } from '@/lib/analytics';
 import { InstagramIcon, FacebookIcon } from '@/components/SocialIcons';
 
 export default function TopBar() {
   const { settings } = useSettings();
+  const { lang, t } = useLanguage();
 
   const instagramUrl = settings.instagram_url || 'https://www.instagram.com/blouseti.shop/';
   const facebookUrl = settings.facebook_url || 'https://web.facebook.com/profile.php?id=61596347515075';
@@ -23,13 +25,13 @@ export default function TopBar() {
         <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-center md:text-left">
           <span className="flex items-center gap-1.5 font-medium text-emerald-300">
             <Megaphone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>{settings.topbar_text}</span>
+            <span>{lang === 'AR' ? t('topbar_default') : settings.topbar_text || t('topbar_default')}</span>
           </span>
         </div>
 
         {/* Dynamic Support phone, WhatsApp & Social Links */}
         <div className="hidden lg:flex items-center gap-4 text-slate-300">
-          <div className="flex items-center gap-2 pr-3 border-r border-white/15">
+          <div className="flex items-center gap-2 pe-3 border-e border-white/15">
             <a
               href={instagramUrl}
               target="_blank"
@@ -49,7 +51,7 @@ export default function TopBar() {
               <FacebookIcon className="w-3.5 h-3.5" />
             </a>
           </div>
-          <span className="text-white/60">Commande &amp; Conseils :</span>
+          <span className="text-white/60">{t('topbar_support')}</span>
           <a
             href={`https://wa.me/${settings.whatsapp_number}?text=Bonjour%20Blouseti,%20je%20souhaite%20des%20informations%20sur%20vos%20tenues%20m%C3%A9dicales.`}
             target="_blank"

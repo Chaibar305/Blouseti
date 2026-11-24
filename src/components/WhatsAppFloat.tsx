@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { usePathname } from 'next/navigation';
 import { trackEvent } from '@/lib/analytics';
 
@@ -12,6 +13,7 @@ export default function WhatsAppFloat() {
   const [showBubble, setShowBubble] = useState(false); // Discrète sur mobile
   const { settings } = useSettings();
   const { quickCheckoutItem, isCartOpen } = useCart();
+  const { lang } = useLanguage();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -46,10 +48,12 @@ export default function WhatsAppFloat() {
           <div>
             <p className="font-bold text-[#1B2A4A] flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-              Service Client Blouseti
+              {lang === 'AR' ? 'خدمة عملاء بلوزتي' : 'Service Client Blouseti'}
             </p>
             <p className="text-[11px] text-slate-600 mt-0.5">
-              Une question sur la taille ou la broderie ? Écrivez-nous sur WhatsApp !
+              {lang === 'AR'
+                ? 'لديك سؤال حول المقاس أو التطريز؟ راسلنا عبر الواتساب!'
+                : 'Une question sur la taille ou la broderie ? Écrivez-nous sur WhatsApp !'}
             </p>
           </div>
         </div>

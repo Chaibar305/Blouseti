@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { Product, ProductColor } from '@/types';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 import ProductCard from '@/components/ProductCard';
 import { trackBoth } from '@/lib/meta';
 
@@ -36,6 +37,7 @@ interface ProductDetailViewProps {
 
 export default function ProductDetailView({ product, relatedProducts }: ProductDetailViewProps) {
   const { addToCart, openQuickCheckout, openSizeGuide } = useCart();
+  const { t } = useLanguage();
 
   // Selected State
   const [selectedColor, setSelectedColor] = useState<ProductColor>(
@@ -454,16 +456,16 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                 )}
                 {product.originalPrice && !hasEmbroidery && (
                   <p className="text-xs font-bold text-emerald-600 mt-1">
-                    Économisez {product.originalPrice - product.price} DH immédiatement
+                    {t('pd_save_now')} {product.originalPrice - product.price} {t('pd_immediately')}
                   </p>
                 )}
               </div>
 
-              <div className="text-right">
+              <div className="text-end">
                 <span className="inline-block text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-full">
-                  Paiement à la livraison
+                  {t('card_cod_badge')}
                 </span>
-                <p className="text-[11px] text-slate-400 mt-1">Livraison sous 24h-48h</p>
+                <p className="text-[11px] text-slate-400 mt-1">{t('pd_delivery_24_48')}</p>
               </div>
             </div>
 
@@ -471,10 +473,10 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
             <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-2.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-slate-700">
-                  Couleur sélectionnée :{' '}
+                  {t('pd_selected_color')}{' '}
                   <strong className="text-slate-900 font-bold">{selectedColor.name}</strong>
                 </span>
-                <span className="text-[11px] text-slate-400">{product.colors.length} coloris</span>
+                <span className="text-[11px] text-slate-400">{product.colors.length} {t('pd_colors_count')}</span>
               </div>
 
               <div className="flex items-center gap-3 flex-wrap">
@@ -524,7 +526,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                   className="inline-flex items-center gap-1 text-sky-600 hover:text-sky-800 font-bold text-xs cursor-pointer transition-colors"
                 >
                   <Ruler className="w-3.5 h-3.5" />
-                  <span>Guide des tailles</span>
+                  <span>{t('pd_size_guide')}</span>
                 </button>
               </div>
 
@@ -717,12 +719,12 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                   {isAddedAnimation ? (
                     <>
                       <Check className="w-4 h-4 stroke-[3]" />
-                      <span>Ajouté au panier !</span>
+                      <span>{t('card_added')}</span>
                     </>
                   ) : (
                     <>
                       <ShoppingBag className="w-4 h-4 text-slate-600" />
-                      <span>Ajouter au panier</span>
+                      <span>{t('pd_add_to_cart')}</span>
                     </>
                   )}
                 </button>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Star, ShoppingBag, Zap, Ruler, Sparkles, Check } from 'lucide-react';
 import { Product, ProductColor } from '@/types';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { trackBoth } from '@/lib/meta';
 
 interface ProductCardProps {
@@ -14,6 +15,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart, openQuickCheckout, openSizeGuide } = useCart();
+  const { t } = useLanguage();
   
   // Selected state
   const [selectedColor, setSelectedColor] = useState<ProductColor>(product.colors[0]);
@@ -289,7 +291,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               className="text-slate-500 hover:text-sky-600 flex items-center gap-1 text-[11px] font-medium transition-colors cursor-pointer"
             >
               <Ruler className="w-3 h-3 text-sky-500" />
-              <span>Tailles</span>
+              <span>{t('card_sizes_btn')}</span>
             </button>
           </div>
 
@@ -306,7 +308,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Color Swatches */}
           <div className="mt-3">
             <div className="flex items-center justify-between text-xs text-slate-600 mb-1.5">
-              <span className="font-medium">Couleur :</span>
+              <span className="font-medium">{t('card_color')}</span>
               <span className="font-bold text-slate-800">{selectedColor.name}</span>
             </div>
             <div className="flex items-center gap-2">
@@ -337,7 +339,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Size Pills */}
           <div className="mt-3.5">
             <div className="flex items-center justify-between text-xs text-slate-600 mb-1.5">
-              <span className="font-medium">Taille :</span>
+              <span className="font-medium">{t('card_size')}</span>
               <span className="font-bold text-sky-700 bg-sky-50 px-1.5 py-0.2 rounded">{selectedSize}</span>
             </div>
             <div className="grid grid-cols-6 gap-1.5">
@@ -376,7 +378,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               )}
             </div>
             <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-              Paiement à la livraison
+              {t('card_cod_badge')}
             </span>
           </div>
 
@@ -396,7 +398,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                   isOutOfStock ? 'text-slate-400' : 'text-amber-400 fill-amber-400'
                 }`}
               />
-              <span>{isOutOfStock ? 'Épuisé (Rupture temporaire)' : 'Acheter en 1 Clic (COD)'}</span>
+              <span>{isOutOfStock ? t('card_out_of_stock') : t('card_quick_buy')}</span>
             </button>
 
             <button

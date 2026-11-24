@@ -7,12 +7,14 @@ import { Truck, ShieldCheck, RefreshCw, Phone, Mail, MapPin, MessageCircle, Hear
 import { SHIPPING_POLICY } from '@/data/morocco';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { trackEvent } from '@/lib/analytics';
 import { InstagramIcon, FacebookIcon } from '@/components/SocialIcons';
 
 export default function Footer() {
   const { openSizeGuide } = useCart();
   const { settings } = useSettings();
+  const { lang, t } = useLanguage();
 
   const instagramUrl = settings.instagram_url || 'https://www.instagram.com/blouseti.shop/';
   const facebookUrl = settings.facebook_url || 'https://web.facebook.com/profile.php?id=61596347515075';
@@ -49,17 +51,17 @@ export default function Footer() {
             </Link>
 
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-sm">
-              Confort & Élégance au quotidien pour les médecins, infirmiers, dentistes et soignants du Maroc. Scrubs 4-Way Stretch, blouses blanches cintrées et broderie personnalisée.
+              {t('footer_desc')}
             </p>
 
             <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-3 py-2 rounded-xl w-fit">
               <ShieldCheck className="w-4 h-4" />
-              <span>100% Cash On Delivery (Paiement à la livraison)</span>
+              <span>{t('footer_cod_pill')}</span>
             </div>
 
             {/* Social Media Buttons */}
             <div className="flex items-center gap-2.5 pt-1">
-              <span className="text-xs text-slate-400 font-semibold">Suivez-nous :</span>
+              <span className="text-xs text-slate-400 font-semibold">{t('footer_follow')}</span>
               <a
                 href={instagramUrl}
                 target="_blank"
@@ -86,23 +88,23 @@ export default function Footer() {
           {/* Quick Links Categories */}
           <div>
             <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">
-              Collections
+              {t('footer_col_1')}
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <a href="#scrubs" className="hover:text-white transition-colors">Scrubs Médicaux Extensibles</a>
+                <a href="#scrub" className="hover:text-white transition-colors">{t('nav_scrubs')}</a>
               </li>
               <li>
-                <a href="#blouses" className="hover:text-white transition-colors">Blouses Blanches Médecins</a>
+                <a href="#blouse" className="hover:text-white transition-colors">{t('nav_blouses')}</a>
               </li>
               <li>
-                <a href="#vestes" className="hover:text-white transition-colors">Vestes Polaires Bloc</a>
+                <a href="#polaire" className="hover:text-white transition-colors">{t('nav_polaires')}</a>
               </li>
               <li>
-                <a href="#catalogue" className="hover:text-white transition-colors">Packs Duo & Étudiants</a>
+                <a href="#catalogue" className="hover:text-white transition-colors">{t('nav_collection')}</a>
               </li>
               <li>
-                <a href="#broderie" className="hover:text-white transition-colors text-amber-400">Atelier Broderie (+45 DH)</a>
+                <a href="#broderie" className="hover:text-white transition-colors text-amber-400">{t('nav_embroidery')}</a>
               </li>
             </ul>
           </div>
@@ -110,28 +112,28 @@ export default function Footer() {
           {/* Service & Assistance */}
           <div>
             <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">
-              Assistance & Tailles
+              {t('footer_col_2')}
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
                 <button
                   onClick={openSizeGuide}
-                  className="hover:text-white text-sky-400 transition-colors text-left cursor-pointer"
+                  className="hover:text-white text-sky-400 transition-colors text-start cursor-pointer"
                 >
-                  Guide des Tailles Maroc (cm)
+                  {t('nav_size_guide')}
                 </button>
               </li>
               <li>
-                <span className="text-slate-400">Échange facile sous 48h</span>
+                <span className="text-slate-400">{t('trust_3_title')}</span>
               </li>
               <li>
-                <span className="text-slate-400">Livraison 24h à 48h partout au Maroc</span>
+                <span className="text-slate-400">{t('trust_2_title')}</span>
               </li>
               <li>
-                <span className="text-slate-400">Entretien & Lavage à 60°C</span>
+                <span className="text-slate-400">{lang === 'AR' ? 'عناية وغسل حتى 60°C' : 'Entretien & Lavage à 60°C'}</span>
               </li>
               <li>
-                <span className="text-slate-400">Commandes Cliniques & Cabinets</span>
+                <span className="text-slate-400">{lang === 'AR' ? 'طلبات العيادات والمراكز الصحية' : 'Commandes Cliniques & Cabinets'}</span>
               </li>
             </ul>
           </div>
@@ -139,7 +141,7 @@ export default function Footer() {
           {/* Contact Direct */}
           <div>
             <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">
-              Service Client Maroc
+              {t('footer_col_3')}
             </h4>
             <ul className="space-y-3 text-xs">
               <li className="flex items-center gap-2">
@@ -198,17 +200,15 @@ export default function Footer() {
         </div>
 
         {/* Bottom copyright and legal */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 text-center sm:text-left">
-          <p>
-            © 2026 Blouseti (بلوزتي) • blouseti.shop • Tous droits réservés.
-          </p>
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 text-center sm:text-start">
+          <p>{t('footer_rights')}</p>
           <div className="flex items-center gap-4 text-xs">
-            <span>Paiement à la réception</span>
+            <span>{t('footer_pay_delivery')}</span>
             <span>•</span>
-            <span>Échange garanti</span>
+            <span>{t('footer_exchange')}</span>
             <span>•</span>
             <span className="flex items-center gap-1 text-slate-300">
-              Fait avec <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> pour les soignants marocains
+              {t('footer_made_with')} <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> {t('footer_for_caregivers')}
             </span>
           </div>
         </div>

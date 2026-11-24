@@ -8,6 +8,7 @@ import confetti from 'canvas-confetti';
 import { CheckCircle2, Truck, MessageCircle, MapPin, Phone, User, Calendar, ShieldCheck, ArrowLeft, Sparkles, Printer } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { SHIPPING_POLICY } from '@/data/morocco';
 import TopBar from '@/components/TopBar';
 import Header from '@/components/Header';
@@ -18,6 +19,7 @@ function OrderConfirmationContent() {
   const orderIdParam = searchParams.get('orderId');
   const { lastOrder } = useCart();
   const { settings } = useSettings();
+  const { t, isRtl } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -124,7 +126,7 @@ function OrderConfirmationContent() {
               className="btn-shimmer w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold py-4 px-6 rounded-2xl text-base shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-3 transition-all cursor-pointer hover:scale-102"
             >
               <MessageCircle className="w-6 h-6 fill-white" />
-              <span>Confirmer ma commande sur WhatsApp</span>
+              <span>{t('merci_whatsapp_confirm')}</span>
             </a>
             <p className="text-[11px] text-slate-500 mt-2">
               Cliquez pour envoyer votre récapitulatif directement à notre atelier et accélérer l&apos;expédition.
@@ -238,8 +240,8 @@ function OrderConfirmationContent() {
             href="/"
             className="inline-flex items-center gap-2 text-sm font-bold text-sky-700 hover:text-sky-800 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Retourner à l&apos;accueil et voir le catalogue</span>
+            <ArrowLeft className={`w-4 h-4 ${isRtl ? 'rotate-180' : ''}`} />
+            <span>{t('merci_back_home')}</span>
           </Link>
         </div>
 

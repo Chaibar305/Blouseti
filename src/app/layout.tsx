@@ -4,6 +4,7 @@ import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { CartProvider } from '@/context/CartContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 import CartDrawer from '@/components/CartDrawer';
 import CodCheckoutModal from '@/components/CodCheckoutModal';
 import SizeGuideModal from '@/components/SizeGuideModal';
@@ -125,21 +126,23 @@ export default function RootLayout({
             alt="Meta Pixel"
           />
         </noscript>
-        <SettingsProvider>
-          {/* Dynamic Pixels & Custom Scripts */}
-          <PixelScripts />
-          <CartProvider>
-            {children}
-            {/* Global Modals & Drawers */}
-            <CartDrawer />
-            <CodCheckoutModal />
-            <SizeGuideModal />
-            <Suspense fallback={null}>
-              <WhatsAppFloat />
-              <MobileBottomCta />
-            </Suspense>
-          </CartProvider>
-        </SettingsProvider>
+        <LanguageProvider>
+          <SettingsProvider>
+            {/* Dynamic Pixels & Custom Scripts */}
+            <PixelScripts />
+            <CartProvider>
+              {children}
+              {/* Global Modals & Drawers */}
+              <CartDrawer />
+              <CodCheckoutModal />
+              <SizeGuideModal />
+              <Suspense fallback={null}>
+                <WhatsAppFloat />
+                <MobileBottomCta />
+              </Suspense>
+            </CartProvider>
+          </SettingsProvider>
+        </LanguageProvider>
         {/* Vercel Analytics */}
         <Analytics />
       </body>

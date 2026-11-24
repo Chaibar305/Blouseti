@@ -3,10 +3,12 @@
 import React, { useState } from 'react';
 import { X, Ruler, HelpCircle, MessageCircle, Check } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { SHIPPING_POLICY } from '@/data/morocco';
 
 export default function SizeGuideModal() {
   const { isSizeGuideOpen, closeSizeGuide } = useCart();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'men' | 'women' | 'coats'>('men');
 
   if (!isSizeGuideOpen) return null;
@@ -47,8 +49,8 @@ export default function SizeGuideModal() {
           <div className="flex items-center gap-2">
             <Ruler className="w-5 h-5 text-sky-400" />
             <div>
-              <h3 className="text-base font-bold">Guide des Tailles Blouseti Maroc</h3>
-              <p className="text-xs text-slate-300">Mesures précises en centimètres (cm)</p>
+              <h3 className="text-base font-bold">{t('size_title')}</h3>
+              <p className="text-xs text-slate-300">{t('size_subtitle')}</p>
             </div>
           </div>
           <button
@@ -70,7 +72,7 @@ export default function SizeGuideModal() {
                 activeTab === 'men' ? 'bg-white text-[#1B2A4A] shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Scrubs Homme / Unisexe
+              {t('size_tab_men')}
             </button>
             <button
               onClick={() => setActiveTab('women')}
@@ -78,7 +80,7 @@ export default function SizeGuideModal() {
                 activeTab === 'women' ? 'bg-white text-[#1B2A4A] shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Scrubs Femme (Cintrés)
+              {t('size_tab_women')}
             </button>
             <button
               onClick={() => setActiveTab('coats')}
@@ -86,7 +88,7 @@ export default function SizeGuideModal() {
                 activeTab === 'coats' ? 'bg-white text-[#1B2A4A] shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Blouses Blanches
+              {t('size_tab_coats')}
             </button>
           </div>
 

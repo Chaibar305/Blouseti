@@ -4,8 +4,10 @@ import React from 'react';
 import Image from 'next/image';
 import { X, Trash2, ShoppingBag, Truck, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CartDrawer() {
+  const { t, isRtl } = useLanguage();
   const {
     items,
     isCartOpen,
@@ -52,9 +54,10 @@ export default function CartDrawer() {
                 <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold leading-tight">Votre Panier Blouseti</h3>
+                <h3 className="text-sm sm:text-base font-bold leading-tight">{t('cart_title')}</h3>
                 <span className="text-[11px] text-sky-300 font-medium">
-                  {totalItemsCount} article{totalItemsCount > 1 ? 's' : ''} sélectionné{totalItemsCount > 1 ? 's' : ''}
+                  {totalItemsCount} {totalItemsCount > 1 ? t('cart_articles') : t('cart_article')}{' '}
+                  {totalItemsCount > 1 ? t('cart_selected_pl') : t('cart_selected')}
                 </span>
               </div>
             </div>
@@ -73,10 +76,10 @@ export default function CartDrawer() {
               <span className="flex items-center gap-1.5 min-w-0 truncate">
                 <Truck className="w-4 h-4 text-sky-600 shrink-0" />
                 {remainingForFreeShipping === 0 ? (
-                  <span className="text-emerald-700 font-bold truncate">🎉 Livraison Gratuite activée</span>
+                  <span className="text-emerald-700 font-bold truncate">{t('cart_free_shipping_unlocked')}</span>
                 ) : (
                   <span className="truncate text-[11px] sm:text-xs">
-                    Plus que <strong className="text-sky-700">{remainingForFreeShipping} DH</strong> pour livraison offerte
+                    {t('cart_free_shipping_remaining')} <strong className="text-sky-700">{remainingForFreeShipping} DH</strong> {t('cart_free_shipping_suffix')}
                   </span>
                 )}
               </span>
@@ -100,16 +103,16 @@ export default function CartDrawer() {
                   <ShoppingBag className="w-8 h-8" />
                 </div>
                 <div>
-                  <p className="text-base font-bold text-slate-800">Votre panier est vide</p>
+                  <p className="text-base font-bold text-slate-800">{t('cart_empty_title')}</p>
                   <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                    Découvrez notre collection de scrubs et blouses médicales confortables 4-Way Stretch.
+                    {t('cart_empty_sub')}
                   </p>
                 </div>
                 <button
                   onClick={closeCart}
                   className="bg-[#1B2A4A] text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-[#111C32] transition-colors cursor-pointer"
                 >
-                  Continuer mes achats
+                  {t('cart_continue')}
                 </button>
               </div>
             ) : (
@@ -204,24 +207,24 @@ export default function CartDrawer() {
             <div className="bg-slate-50 p-4 sm:p-5 border-t border-slate-200 space-y-3 shrink-0 shadow-lg">
               <div className="space-y-1.5 text-xs">
                 <div className="flex justify-between items-center text-slate-600">
-                  <span>Sous-total articles :</span>
+                  <span>{t('cart_subtotal')}</span>
                   <span className="font-semibold text-slate-900">{subtotal} DH</span>
                 </div>
                 {embroideryTotal > 0 && (
                   <div className="flex justify-between items-center text-amber-700 font-medium">
-                    <span>Option broderie :</span>
+                    <span>{t('cart_emb_option')}</span>
                     <span>+{embroideryTotal} DH</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center text-slate-600">
-                  <span>Livraison partout au Maroc :</span>
+                  <span>{t('cart_shipping')}</span>
                   <span className={shippingFee === 0 ? 'text-emerald-700 font-bold' : 'font-semibold'}>
-                    {shippingFee === 0 ? 'GRATUITE' : `${shippingFee} DH`}
+                    {shippingFee === 0 ? t('cart_free') : `${shippingFee} DH`}
                   </span>
                 </div>
                 <div className="pt-2 border-t border-slate-200 flex items-baseline justify-between gap-2">
                   <span className="text-xs sm:text-sm font-extrabold text-[#1B2A4A]">
-                    Total (Paiement à la livraison) :
+                    {t('cart_total_cod')}
                   </span>
                   <span className="text-xl sm:text-2xl font-black text-[#1B2A4A] shrink-0">
                     {total} DH
@@ -234,13 +237,13 @@ export default function CartDrawer() {
                 onClick={handleCheckoutFromCart}
                 className="w-full btn-shimmer bg-[#1B2A4A] hover:bg-[#111C32] text-white font-extrabold py-3.5 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-sm sm:text-base shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
               >
-                <span>Commander (Paiement à la livraison)</span>
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400 shrink-0" />
+                <span>{t('cart_checkout_btn')}</span>
+                <ArrowRight className={`w-4 h-4 sm:w-5 sm:h-5 text-sky-400 shrink-0 ${isRtl ? 'rotate-180' : ''}`} />
               </button>
 
               <div className="flex items-center justify-center gap-1.5 text-[10px] sm:text-[11px] text-slate-500 text-center leading-tight pt-0.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Réglez en espèces à la livraison après vérification de votre commande.</span>
+                <span>{t('cart_reassurance')}</span>
               </div>
             </div>
           )}

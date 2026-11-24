@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { Sparkles, Check, HeartPulse, ShieldAlert, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { PRODUCTS } from '@/data/products';
 
 export default function EmbroiderySection() {
   const { openQuickCheckout } = useCart();
+  const { t, isRtl } = useLanguage();
   
   const [drName, setDrName] = useState('Dr. S. Bennani');
   const [speciality, setSpeciality] = useState('Chirurgien Dentiste');
@@ -55,13 +57,13 @@ export default function EmbroiderySection() {
         <div className="text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 bg-amber-400/10 border border-amber-400/20 text-amber-300 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-4">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Option Atelier de Broderie Haute Précision</span>
+            <span>{t('emb_badge')}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
-            Faites Broder Votre Nom & Spécialité (+45 DH)
+            {t('emb_title')}
           </h2>
           <p className="mt-3 text-slate-300 text-sm sm:text-base leading-relaxed">
-            Valorisez votre statut professionnel avec une broderie indélébile réalisée dans nos ateliers à Casablanca. Résiste à tous les cycles de lavage et de désinfection hospitalière.
+            {t('emb_subtitle')}
           </p>
         </div>
 
@@ -70,16 +72,16 @@ export default function EmbroiderySection() {
           {/* Controls column */}
           <div className="lg:col-span-6 bg-white/5 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-white/10 space-y-5">
             <h3 className="text-base font-bold text-white flex items-center justify-between border-b border-white/10 pb-3">
-              <span>Personnaliser en direct votre tenue</span>
+              <span>{t('emb_box_title')}</span>
               <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-500/30">
-                +45 DH seulement
+                {t('emb_price_pill')}
               </span>
             </h3>
 
             {/* Input Name */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Nom complet ou Titre (Ex: Dr. Bennani, Pr. Alami, Sage-femme Fatima)
+                {t('emb_name_label')}
               </label>
               <input
                 type="text"
@@ -94,7 +96,7 @@ export default function EmbroiderySection() {
             {/* Input Speciality */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Spécialité ou Fonction (Ligne 2 facultative)
+                {t('emb_spec_label')}
               </label>
               <input
                 type="text"
@@ -109,7 +111,7 @@ export default function EmbroiderySection() {
             {/* Font selector */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-2">
-                Style d’écriture de la broderie
+                {t('emb_font_label')}
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {(['Script Élégance', 'Moderne Classique', 'Serif Prestige'] as const).map((font) => (
@@ -132,7 +134,7 @@ export default function EmbroiderySection() {
             {/* Thread color selector */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-2">
-                Couleur du fil de broderie
+                {t('emb_color_label')}
               </label>
               <div className="flex flex-wrap gap-2.5">
                 {(Object.keys(threadColors) as Array<keyof typeof threadColors>).map((key) => {
@@ -165,8 +167,8 @@ export default function EmbroiderySection() {
               onClick={handleOrderWithCustomEmbroidery}
               className="w-full btn-shimmer bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3.5 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer mt-4"
             >
-              <span>Commander un Scrub avec cette Broderie</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{t('emb_cta')}</span>
+              <ArrowRight className={`w-4 h-4 ${isRtl ? 'rotate-180' : ''}`} />
             </button>
           </div>
 

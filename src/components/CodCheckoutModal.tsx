@@ -24,6 +24,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { MOROCCAN_CITIES, SHIPPING_POLICY } from '@/data/morocco';
 import { OrderData } from '@/types';
 import { createCodOrderAction } from '@/app/actions/orders';
@@ -59,6 +60,7 @@ export default function CodCheckoutModal() {
   const router = useRouter();
   const { quickCheckoutItem, closeQuickCheckout, setLastOrder } = useCart();
   const { settings } = useSettings();
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Coupon state
@@ -382,10 +384,10 @@ export default function CodCheckoutModal() {
             </span>
             <div>
               <h3 className="text-sm sm:text-base font-bold leading-tight">
-                Commande Express en 1 Clic (COD)
+                {t('cod_title')}
               </h3>
               <p className="text-[11px] text-slate-300">
-                Paiement en espèces à la livraison partout au Maroc
+                {t('cod_subtitle')}
               </p>
             </div>
           </div>
@@ -577,10 +579,8 @@ export default function CodCheckoutModal() {
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <span>Genre du client &amp; Coupe</span>
-                    <span className="text-red-500">*</span>
+                    <span>{t('cod_gender')}</span>
                   </span>
-                  <span className="text-[11px] text-slate-400 font-normal">Pour ajuster la coupe de votre tenue</span>
                 </label>
                 <div className="grid grid-cols-2 gap-2.5">
                   <button
@@ -593,7 +593,7 @@ export default function CodCheckoutModal() {
                     }`}
                   >
                     <span className="text-base">👩‍⚕️</span>
-                    <span>Femme (Coupe Cintrée)</span>
+                    <span>{t('cod_women')}</span>
                   </button>
                   <button
                     type="button"
@@ -605,7 +605,7 @@ export default function CodCheckoutModal() {
                     }`}
                   >
                     <span className="text-base">👨‍⚕️</span>
-                    <span>Homme (Coupe Droite)</span>
+                    <span>{t('cod_men')}</span>
                   </button>
                 </div>
                 <input type="hidden" {...register('gender')} />
@@ -622,7 +622,7 @@ export default function CodCheckoutModal() {
                 {/* Full Name */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Nom & Prénom <span className="text-red-500">*</span>
+                    {t('cod_fullname')}
                   </label>
                   <div className="relative">
                     <input
@@ -648,7 +648,7 @@ export default function CodCheckoutModal() {
                 {/* Phone (WhatsApp) */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Téléphone / WhatsApp <span className="text-red-500">*</span>
+                    {t('cod_phone')}
                   </label>
                   <div className="relative">
                     <input
@@ -675,7 +675,7 @@ export default function CodCheckoutModal() {
               {/* City Dropdown */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Ville de livraison au Maroc <span className="text-red-500">*</span>
+                  {t('cod_city')}
                 </label>
                 <div className="relative">
                   <select
@@ -701,7 +701,7 @@ export default function CodCheckoutModal() {
               {/* Address */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Adresse exacte (Cabinet, Clinique, Hôpital ou Domicile) <span className="text-red-500">*</span>
+                  {t('cod_address')}
                 </label>
                 <div className="relative">
                   <input
@@ -727,7 +727,7 @@ export default function CodCheckoutModal() {
               {/* Optional Notes */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Instructions de livraison (Facultatif)
+                  {t('cod_notes')}
                 </label>
                 <div className="relative">
                   <input
@@ -780,7 +780,7 @@ export default function CodCheckoutModal() {
                           <span>Vérification...</span>
                         </>
                       ) : (
-                        <span>Appliquer</span>
+                        <span>{t('cod_coupon_apply')}</span>
                       )}
                     </button>
                   </div>
@@ -847,9 +847,9 @@ export default function CodCheckoutModal() {
                 </div>
               )}
               <div className="flex justify-between text-slate-600">
-                <span>Frais de livraison au Maroc :</span>
+                <span>{t('cart_shipping')}</span>
                 <span className={shippingFee === 0 ? 'text-emerald-700 font-bold' : 'font-semibold'}>
-                  {shippingFee === 0 ? 'GRATUITE' : `${shippingFee} DH`}
+                  {shippingFee === 0 ? t('cart_free') : `${shippingFee} DH`}
                 </span>
               </div>
             </div>
@@ -882,15 +882,15 @@ export default function CodCheckoutModal() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Traitement de votre commande...</span>
+                  <span>{t('cod_submitting')}</span>
                 </>
               ) : isCurrentVariantOutOfStock ? (
-                <span>TAILLE ÉPUISÉE POUR CE COLORIS</span>
+                <span>{t('card_out_of_stock')}</span>
               ) : (
                 <>
                   <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span className="truncate">
-                    COMMANDER MAINTENANT • PAIEMENT À LA LIVRAISON
+                    {t('cod_submit')}
                   </span>
                   <ArrowRight className="w-4 h-4 text-sky-400 shrink-0" />
                 </>

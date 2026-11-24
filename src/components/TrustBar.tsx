@@ -2,41 +2,44 @@
 
 import React from 'react';
 import { ShieldCheck, Truck, RefreshCw, Award } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function TrustBar() {
+  const { t } = useLanguage();
+
   const pillars = [
     {
       icon: ShieldCheck,
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-50',
       borderColor: 'border-emerald-100',
-      title: 'Paiement à la Livraison',
-      desc: '0 dirham d’avance. Vous ne réglez en espèces qu’à la réception de votre colis.'
+      title: t('trust_1_title'),
+      desc: t('trust_1_desc'),
     },
     {
       icon: Truck,
       color: 'text-sky-600',
       bgColor: 'bg-sky-50',
       borderColor: 'border-sky-100',
-      title: 'Livraison 24h à 48h',
-      desc: 'Expédition express partout au Maroc : Casablanca, Rabat, Marrakech, Fès, Tanger...'
+      title: t('trust_2_title'),
+      desc: t('trust_2_desc'),
     },
     {
       icon: RefreshCw,
       color: 'text-amber-600',
       bgColor: 'bg-amber-50',
       borderColor: 'border-amber-100',
-      title: 'Échange de Taille 48h',
-      desc: 'Taille trop grande ou trop ajustée ? Nous échangeons votre tenue sans stress.'
+      title: t('trust_3_title'),
+      desc: t('trust_3_desc'),
     },
     {
       icon: Award,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
       borderColor: 'border-red-100',
-      title: 'Tissu Médical Oeko-Tex',
-      desc: 'Tissu stretch respirant, hypoallergénique et lavable à 60°C sans rétrécissement.'
-    }
+      title: t('trust_4_title'),
+      desc: t('trust_4_desc'),
+    },
   ];
 
   return (

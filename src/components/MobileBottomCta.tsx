@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Truck, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { usePathname } from 'next/navigation';
 
 export default function MobileBottomCta() {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  const { quickCheckoutItem, isCartOpen, openCart } = useCart();
+  const { quickCheckoutItem, isCartOpen } = useCart();
+  const { t, isRtl } = useLanguage();
 
   useEffect(() => {
     setMounted(true);
@@ -37,8 +39,8 @@ export default function MobileBottomCta() {
         className="w-full min-h-[50px] btn-shimmer bg-[#1B2A4A] active:bg-[#111C32] text-white font-black py-3.5 px-4 rounded-xl text-xs tracking-wide shadow-lg shadow-[#1B2A4A]/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
       >
         <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
-        <span className="truncate">COMMANDER MAINTENANT - PAIEMENT À LA LIVRAISON</span>
-        <ArrowRight className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+        <span className="truncate">{t('mobile_cta')}</span>
+        <ArrowRight className={`w-3.5 h-3.5 text-sky-400 shrink-0 ${isRtl ? 'rotate-180' : ''}`} />
       </button>
     </div>
   );
